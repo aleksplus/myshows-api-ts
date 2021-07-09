@@ -1,5 +1,7 @@
 # @p.aleks/myshows-api
 
+## Forked from [@asznee7/myshows-api](https://github.com/asznee7/myshows-api)
+
 [![GitHub license](https://img.shields.io/github/license/dotaxe/myshows-api.svg)](https://github.com/dotaxe/myshows-api/blob/master/LICENSE)
 
 ## Overview

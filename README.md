@@ -1,10 +1,9 @@
-# myshows-api
+# @p.aleks/myshows-api
 
-[![Dependencies](https://david-dm.org/dotaxe/myshows-api.svg)](https://david-dm.org/dotaxe/myshows-api)
 [![GitHub license](https://img.shields.io/github/license/dotaxe/myshows-api.svg)](https://github.com/dotaxe/myshows-api/blob/master/LICENSE)
 
 ## Overview
-Simple API wrapper for logging into and interacting with [MyShows](https://myshows.me/) website.
+Simple API wrapper for logging into and interacting with [MyShows](https://myshows.me/) website. Rewritten to Typescript.
 
 #### Supported versions
 * [MyShows.me API v2.0](https://api.myshows.me/shared/doc/) - based on JSON-RPC 2.0 with OAuth 2.0 as authorization. In order to use this module you need to obtain OAuth AppID. If you don't have one you can request in here api@myshows.me.
@@ -14,13 +13,15 @@ Simple API wrapper for logging into and interacting with [MyShows](https://mysho
 To install run
 
 ```
-$ npm install myshows-api
+$ yarn add @p.aleks/myshows-api
+// or
+$ npm install @p.aleks/myshows-api
 ```
 
 Simple example of using generic method: 
 
 ```javascript
-const MyShows = require('myshows-api')
+import MyShows from 'myshows-api';
 
 const credentials = {
   client_id: 'your_client_id',

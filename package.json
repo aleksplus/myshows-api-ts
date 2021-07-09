@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build && npm version patch"
+    "clean": "rimraf dist/",
+    "prepublishOnly": "npm run clean && npm run build && npm version patch"
   },
   "author": "Aleks P. (https://github.com/aleksplus)",
   "contributors": [
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@json-rpc-tools/types": "^1.7.6",
     "prettier": "^2.3.2",
+    "rimraf": "^3.0.2",
     "typescript": "^4.3.5"
   }
 }

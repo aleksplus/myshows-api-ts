@@ -1,5 +1,5 @@
 import { MyShows } from './components/base';
 
-export default MyShows;
+export { MyShows };
 
-export * from "./types"
+export * from './types';

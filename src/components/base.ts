@@ -1,5 +1,5 @@
-import axios, { AxiosInstance } from "axios";
-import { JsonRpcResult } from "@json-rpc-tools/types";
+import axios, { AxiosInstance } from 'axios';
+import { JsonRpcResult } from '@json-rpc-tools/types';
 import {
   Credentials,
   DefaultParams,
@@ -12,14 +12,14 @@ import {
   Method,
   RpcError,
   RpcResponse,
-} from "../types";
+} from '../types';
 
-const AUTH_URL = "https://myshows.me/oauth/token";
-const BASE_URL = "https://api.myshows.me/v2/rpc/";
+const AUTH_URL = 'https://myshows.me/oauth/token';
+const BASE_URL = 'https://api.myshows.me/v2/rpc/';
 const DEFAULT_PARAMS: DefaultParams = {
-  jsonrpc: "2.0",
+  jsonrpc: '2.0',
   // @ts-ignore
-  method: "",
+  method: '',
   params: {},
   id: 1,
 };
@@ -35,11 +35,11 @@ type SearchObjectOptions = Partial<{
  * @param {object} param0 - search object.
  */
 const GetSearchObjectProps = ({
-  query,
-  wasted,
-  year,
-  gender,
-}: SearchObjectOptions) => ({
+                                query,
+                                wasted,
+                                year,
+                                gender,
+                              }: SearchObjectOptions) => ({
   query,
   wasted,
   year,
@@ -54,7 +54,7 @@ export class MyShows implements IMyShows {
   constructor(credentials: Credentials) {
     this.credentials = {
       ...credentials,
-      grant_type: "password",
+      grant_type: 'password',
     };
     this.axios = axios.create({
       baseURL: BASE_URL,
@@ -70,8 +70,8 @@ export class MyShows implements IMyShows {
       let response = await this.axios.post(AUTH_URL, this.credentials);
 
       this.axios.defaults.headers.common[
-        "Authorization"
-      ] = `bearer ${response.data.access_token}`;
+        'Authorization'
+        ] = `bearer ${response.data.access_token}`;
     } catch (error) {
       return { error };
     }
@@ -87,7 +87,7 @@ export class MyShows implements IMyShows {
     params: Record<string, unknown>
   ): Promise<T | RpcError> {
     try {
-      const response = await this.axios.post<T>("", {
+      const response = await this.axios.post<T>('', {
         ...this.defaultParams,
         method: method,
         params,
@@ -112,9 +112,9 @@ export class MyShows implements IMyShows {
     list = EList.FAVORITES
   ): Promise<RpcResponse<T, { list: EList }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "lists.Shows",
+        method: 'lists.Shows',
         params: {
           list,
         },
@@ -139,9 +139,9 @@ export class MyShows implements IMyShows {
    */
   async listsAddShow<T>(id: number): Promise<RpcResponse<T, { id: number }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "lists.AddShow",
+        method: 'lists.AddShow',
         params: {
           id,
           list: EList.FAVORITES,
@@ -165,18 +165,14 @@ export class MyShows implements IMyShows {
    * if removing was successful (requires authentication).
    * @param {int} id - Episode id.
    */
-  async listsRemoveShow<T>(id: number): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-      }
-    >
-  > {
+  async listsRemoveShow<T>(id: number): Promise<RpcResponse<T,
+    {
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "lists.RemoveShow",
+        method: 'lists.RemoveShow',
         params: {
           id,
           list: EList.FAVORITES,
@@ -203,9 +199,9 @@ export class MyShows implements IMyShows {
     list = EList.FAVORITES
   ): Promise<RpcResponse<T, { list: EList }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "lists.Episodes",
+        method: 'lists.Episodes',
         params: {
           list,
         },
@@ -231,19 +227,15 @@ export class MyShows implements IMyShows {
   async listsAddEpisode<T>(
     id: number,
     list: EList.FAVORITES | EList.IGNORED
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        list: EList.FAVORITES | EList.IGNORED;
-        id: number;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      list: EList.FAVORITES | EList.IGNORED;
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "lists.AddEpisode",
+        method: 'lists.AddEpisode',
         params: {
           id,
           list,
@@ -270,19 +262,15 @@ export class MyShows implements IMyShows {
   async listsRemoveEpisode<T>(
     id: number,
     list: EList.FAVORITES | EList.IGNORED
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        list: EList.FAVORITES | EList.IGNORED;
-        id: number;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      list: EList.FAVORITES | EList.IGNORED;
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "lists.RemoveEpisode",
+        method: 'lists.RemoveEpisode',
         params: {
           id,
           list,
@@ -309,19 +297,15 @@ export class MyShows implements IMyShows {
   async manageSetShowStatus<T>(
     id: number,
     status: EShowStatus
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-        status: EShowStatus;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+      status: EShowStatus;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.SetShowStatus",
+        method: 'manage.SetShowStatus',
         params: {
           id,
           status,
@@ -348,19 +332,15 @@ export class MyShows implements IMyShows {
   async manageRateShow<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
     rating: R
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-        rating: R;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+      rating: R;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.RateShow",
+        method: 'manage.RateShow',
         params: {
           id,
           rating,
@@ -387,19 +367,15 @@ export class MyShows implements IMyShows {
   async manageCheckEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
     rating: R
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-        rating: R;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+      rating: R;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.CheckEpisode",
+        method: 'manage.CheckEpisode',
         params: {
           id,
           rating,
@@ -422,18 +398,14 @@ export class MyShows implements IMyShows {
    * Uncheck an episode as watched (requires authentication).
    * @param {int} id - Episode id.
    */
-  async manageUnCheckEpisode<T>(id: number): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-      }
-    >
-  > {
+  async manageUnCheckEpisode<T>(id: number): Promise<RpcResponse<T,
+    {
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.UnCheckEpisode",
+        method: 'manage.UnCheckEpisode',
         params: {
           id,
         },
@@ -459,19 +431,15 @@ export class MyShows implements IMyShows {
   async manageRateEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
     rating: R
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-        rating: R;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+      rating: R;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.RateEpisode",
+        method: 'manage.RateEpisode',
         params: {
           id,
           rating,
@@ -506,18 +474,14 @@ export class MyShows implements IMyShows {
     r3: R[],
     r4: R[],
     r5: R[]
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.RateEpisodesBulk",
+        method: 'manage.RateEpisodesBulk',
         params: {
           id,
           r1,
@@ -548,18 +512,14 @@ export class MyShows implements IMyShows {
   async manageSyncEpisodes<T>(
     id: number,
     episodeIds: number[]
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.SyncEpisodes",
+        method: 'manage.SyncEpisodes',
         params: {
           showId: id,
           episodeIds,
@@ -582,18 +542,14 @@ export class MyShows implements IMyShows {
     id: number,
     checkedIds: number[],
     unCheckedIds: number[]
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        id: number;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "manage.SyncEpisodesDelta",
+        method: 'manage.SyncEpisodesDelta',
         params: {
           showId: id,
           checkedIds,
@@ -617,18 +573,14 @@ export class MyShows implements IMyShows {
    * Returns user profile (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileGet<T>(login: string): Promise<
-    RpcResponse<
-      T,
-      {
-        login: string;
-      }
-    >
-  > {
+  async profileGet<T>(login: string): Promise<RpcResponse<T,
+    {
+      login: string;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Get",
+        method: 'profile.Get',
         params: {
           login,
         },
@@ -650,18 +602,14 @@ export class MyShows implements IMyShows {
    * Returns user public feed (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileFeed<T>(login: string): Promise<
-    RpcResponse<
-      T,
-      {
-        login: string;
-      }
-    >
-  > {
+  async profileFeed<T>(login: string): Promise<RpcResponse<T,
+    {
+      login: string;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Feed",
+        method: 'profile.Feed',
         params: {
           login,
         },
@@ -683,18 +631,14 @@ export class MyShows implements IMyShows {
    * Returns user's friend list (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileFriends<T>(login: string): Promise<
-    RpcResponse<
-      T,
-      {
-        login: string;
-      }
-    >
-  > {
+  async profileFriends<T>(login: string): Promise<RpcResponse<T,
+    {
+      login: string;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Friends",
+        method: 'profile.Friends',
         params: {
           login,
         },
@@ -716,18 +660,14 @@ export class MyShows implements IMyShows {
    * Returns user's followers (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileFollowers<T>(login: string): Promise<
-    RpcResponse<
-      T,
-      {
-        login: string;
-      }
-    >
-  > {
+  async profileFollowers<T>(login: string): Promise<RpcResponse<T,
+    {
+      login: string;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Followers",
+        method: 'profile.Followers',
         params: {
           login,
         },
@@ -750,9 +690,9 @@ export class MyShows implements IMyShows {
    */
   async profileFriendsFeed<T>(): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.FriendsFeed",
+        method: 'profile.FriendsFeed',
       });
 
       const { result } = response.data;
@@ -771,18 +711,14 @@ export class MyShows implements IMyShows {
    * Returns user's shows (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileShows<T>(login: string): Promise<
-    RpcResponse<
-      T,
-      {
-        login: string;
-      }
-    >
-  > {
+  async profileShows<T>(login: string): Promise<RpcResponse<T,
+    {
+      login: string;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Shows",
+        method: 'profile.Shows',
         params: {
           login,
         },
@@ -804,18 +740,14 @@ export class MyShows implements IMyShows {
    * Returns show episodes for the current user (requires authentication).
    * @param {int} showId - ID of the show.
    */
-  async profileEpisodes<T>(showId: number): Promise<
-    RpcResponse<
-      T,
-      {
-        showId: number;
-      }
-    >
-  > {
+  async profileEpisodes<T>(showId: number): Promise<RpcResponse<T,
+    {
+      showId: number;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Episodes",
+        method: 'profile.Episodes',
         params: {
           showId,
         },
@@ -838,9 +770,9 @@ export class MyShows implements IMyShows {
    */
   async profileAchievements<T>(): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.Achievements",
+        method: 'profile.Achievements',
       });
 
       const { result } = response.data;
@@ -860,9 +792,9 @@ export class MyShows implements IMyShows {
    */
   async profileNewComments<T>(): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "profile.NewComments",
+        method: 'profile.NewComments',
       });
 
       const { result } = response.data;
@@ -887,9 +819,9 @@ export class MyShows implements IMyShows {
     withEpisodes = true
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.GetById",
+        method: 'shows.GetById',
         params: {
           showId: id,
           withEpisodes,
@@ -918,9 +850,9 @@ export class MyShows implements IMyShows {
     source: EShowSources
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.GetByExternalId",
+        method: 'shows.GetByExternalId',
         params: {
           id,
           source,
@@ -945,9 +877,9 @@ export class MyShows implements IMyShows {
    */
   async showsSearch<T>(query: string) {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.Search",
+        method: 'shows.Search',
         params: {
           query,
         },
@@ -971,9 +903,9 @@ export class MyShows implements IMyShows {
    */
   async showsSearchByFile<T>(file: string): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.SearchByFile",
+        method: 'shows.SearchByFile',
         params: {
           file,
         },
@@ -998,9 +930,9 @@ export class MyShows implements IMyShows {
    */
   async showsIds<T>(fromId: number, count: number): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.Ids",
+        method: 'shows.Ids',
         params: {
           fromId,
           count,
@@ -1025,9 +957,9 @@ export class MyShows implements IMyShows {
    */
   async showsEpisode<T>(id: number): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.Episode",
+        method: 'shows.Episode',
         params: {
           id,
         },
@@ -1050,9 +982,9 @@ export class MyShows implements IMyShows {
    */
   async showsGenres<T>(): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.Genres",
+        method: 'shows.Genres',
       });
 
       const { result } = response.data;
@@ -1077,9 +1009,9 @@ export class MyShows implements IMyShows {
     count = 500
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.Top",
+        method: 'shows.Top',
         params: {
           mode,
           count,
@@ -1104,9 +1036,9 @@ export class MyShows implements IMyShows {
    */
   async showsViewEpisodeComments<T>(id: number): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.ViewEpisodeComments",
+        method: 'shows.ViewEpisodeComments',
         params: {
           episodeId: id,
         },
@@ -1134,9 +1066,9 @@ export class MyShows implements IMyShows {
     isTracked: boolean
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.TrackEpisodeComments",
+        method: 'shows.TrackEpisodeComments',
         params: {
           episodeId: id,
           isTracked,
@@ -1165,9 +1097,9 @@ export class MyShows implements IMyShows {
     isPositive: boolean
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.VoteEpisodeComment",
+        method: 'shows.VoteEpisodeComment',
         params: {
           commentId: id,
           isPositive,
@@ -1198,9 +1130,9 @@ export class MyShows implements IMyShows {
     parentId: number
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.PostEpisodeComment",
+        method: 'shows.PostEpisodeComment',
         params: {
           commentId: id,
           text,
@@ -1230,9 +1162,9 @@ export class MyShows implements IMyShows {
     language: string
   ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "shows.TranslateEpisodeComment",
+        method: 'shows.TranslateEpisodeComment',
         params: {
           commentId: id,
           language,
@@ -1265,22 +1197,18 @@ export class MyShows implements IMyShows {
     search: SearchObjectOptions = {},
     page = 0,
     pageSize = 100
-  ): Promise<
-    RpcResponse<
-      T,
-      {
-        search: SearchObjectOptions;
-        page: number;
-        pageSize: number;
-      }
-    >
-  > {
+  ): Promise<RpcResponse<T,
+    {
+      search: SearchObjectOptions;
+      page: number;
+      pageSize: number;
+    }>> {
     try {
       const picked = GetSearchObjectProps(search);
 
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "users.Search",
+        method: 'users.Search',
         params: {
           search: picked,
           page,
@@ -1309,20 +1237,16 @@ export class MyShows implements IMyShows {
    * @param {number} [search.year] - year of registration.
    * @param {string} [search.gender] - gender, any of EGender enum.
    */
-  async usersCount<T>(search: SearchObjectOptions = {}): Promise<
-    RpcResponse<
-      T,
-      {
-        search: SearchObjectOptions;
-      }
-    >
-  > {
+  async usersCount<T>(search: SearchObjectOptions = {}): Promise<RpcResponse<T,
+    {
+      search: SearchObjectOptions;
+    }>> {
     try {
       const picked = GetSearchObjectProps(search);
 
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "users.Count",
+        method: 'users.Count',
         params: {
           search: picked,
         },
@@ -1346,18 +1270,14 @@ export class MyShows implements IMyShows {
    * returns total number of website's users (does not require authentication).
    * @param {string} [query] - query string.
    */
-  async usersFiltersCounters<T>(query: string): Promise<
-    RpcResponse<
-      T,
-      {
-        query: string;
-      }
-    >
-  > {
+  async usersFiltersCounters<T>(query: string): Promise<RpcResponse<T,
+    {
+      query: string;
+    }>> {
     try {
-      const response = await this.axios.post("", {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
-        method: "users.FiltersCounters",
+        method: 'users.FiltersCounters',
         params: {
           search: {
             query,
@@ -1368,12 +1288,10 @@ export class MyShows implements IMyShows {
       const { result } = response.data;
 
       if (result) {
-        return { query, result } as RpcResponse<
-          T,
+        return { query, result } as RpcResponse<T,
           {
             query: string;
-          }
-        >;
+          }>;
       } else {
         return { error: response.data.error };
       }

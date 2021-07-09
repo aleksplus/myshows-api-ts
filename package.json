@@ -3,10 +3,10 @@
   "version": "0.0.10",
   "description": "A simple API for logging into and interacting with MyShows website. Rewritten to Typescript.",
   "main": "dist/bundle.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/bundle.d.ts",
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf dist/",
+    "clean": "rimraf dist/*",
     "prepublishOnly": "npm run clean && npm run build && npm version patch"
   },
   "author": "Aleks P. (https://github.com/aleksplus)",

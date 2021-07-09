@@ -3,11 +3,12 @@
   "version": "0.0.2",
   "description": "A simple API for logging into and interacting with MyShows website. Rewritten to Typescript.",
   "main": "dist/bundle.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "start": "node ./example/index.js",
     "start:dev": "webpack serve --open --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js",
-    "prepublish": "npm build"
+    "prepublish": "tsc"
   },
   "author": "Aleks P. (https://github.com/aleksplus)",
   "contributors": [

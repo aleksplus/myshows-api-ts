@@ -831,7 +831,7 @@ export class MyShows implements IMyShows {
   /**
    * Returns list of achievements for the current user (requires authentication).
    */
-  async profileAchievements() {
+  async profileAchievements<T>(): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -853,7 +853,7 @@ export class MyShows implements IMyShows {
   /**
    * Returns list of achievements for the current user (requires authentication).
    */
-  async profileNewComments() {
+  async profileNewComments<T>(): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -877,7 +877,10 @@ export class MyShows implements IMyShows {
    * @param {int} id - Show id.
    * @param {boolean} [withEpisodes=true] - Include episodes in response.
    */
-  async showsGetById(id: number, withEpisodes = true) {
+  async showsGetById<T>(
+    id: number,
+    withEpisodes = true
+  ): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -905,7 +908,10 @@ export class MyShows implements IMyShows {
    * @param {*} id - External show id.
    * @param {*} source - Source name, any of EShowSources enum.
    */
-  async showsGetByExternalId(id: number, source: EShowSources) {
+  async showsGetByExternalId<T>(
+    id: number,
+    source: EShowSources
+  ): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -932,7 +938,7 @@ export class MyShows implements IMyShows {
    * Returns matched shows (does not require authentication).
    * @param {string} query - Query string.
    */
-  async showsSearch(query: string) {
+  async showsSearch<T>(query: string) {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -958,7 +964,7 @@ export class MyShows implements IMyShows {
    * Returns matched shows (does not require authentication).
    * @param {string} file - Query string.
    */
-  async showsSearchByFile(file: string) {
+  async showsSearchByFile<T>(file: string): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -985,7 +991,7 @@ export class MyShows implements IMyShows {
    * @param {int} fromId - Starting show id (excluding).
    * @param {int} [count=100] - Number of ids (max 1000).
    */
-  async showsIds(fromId: number, count: number) {
+  async showsIds<T>(fromId: number, count: number): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1012,7 +1018,7 @@ export class MyShows implements IMyShows {
    * Returns an episode by id (does not require authentication).
    * @param {int} id - Episode id.
    */
-  async showsEpisode(id: number) {
+  async showsEpisode<T>(id: number): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1037,7 +1043,7 @@ export class MyShows implements IMyShows {
   /**
    * Returns a list of genres (does not require authentication).
    */
-  async showsGenres() {
+  async showsGenres<T>(): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1091,7 +1097,7 @@ export class MyShows implements IMyShows {
    * Marks comments as viewed for an episode (requires authentication).
    * @param {int} id - Episode id.
    */
-  async showsViewEpisodeComments(id: number) {
+  async showsViewEpisodeComments<T>(id: number): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1118,7 +1124,10 @@ export class MyShows implements IMyShows {
    * @param {int} id - Episode id.
    * @param {boolean} isTracked - Should we track new comments for this episode or not.
    */
-  async showsTrackEpisodeComments(id: number, isTracked: boolean) {
+  async showsTrackEpisodeComments<T>(
+    id: number,
+    isTracked: boolean
+  ): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1146,7 +1155,10 @@ export class MyShows implements IMyShows {
    * @param {int} id - Comment id.
    * @param {boolean} isPositive - true/false for positive/negative vote.
    */
-  async showsVoteEpisodeComment(id: number, isPositive: boolean) {
+  async showsVoteEpisodeComment<T>(
+    id: number,
+    isPositive: boolean
+  ): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1175,7 +1187,11 @@ export class MyShows implements IMyShows {
    * @param {string} text - Comment body (between 5 and 2000 (4000 for pro users) characters).
    * @param {int} [parentId] - Parent comment id.
    */
-  async showsPostEpisodeComment(id: number, text: string, parentId: number) {
+  async showsPostEpisodeComment<T>(
+    id: number,
+    text: string,
+    parentId: number
+  ): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1204,7 +1220,10 @@ export class MyShows implements IMyShows {
    * @param {int} id - Comment id.
    * @param {boolean} [language=user's default language] - Target language.
    */
-  async showsTranslateEpisodeComment(id: number, language: string) {
+  async showsTranslateEpisodeComment<T>(
+    id: number,
+    language: string
+  ): Promise<RpcResponse<T>> {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,
@@ -1237,11 +1256,20 @@ export class MyShows implements IMyShows {
    * @param {int} [page=0] - page number.
    * @param {int} [pageSize=100] - total number of users to return (max 100).
    */
-  async usersSearch(
+  async usersSearch<T>(
     search: SearchObjectOptions = {},
     page = 0,
     pageSize = 100
-  ) {
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        search: SearchObjectOptions;
+        page: number;
+        pageSize: number;
+      }
+    >
+  > {
     try {
       const picked = GetSearchObjectProps(search);
 
@@ -1276,7 +1304,14 @@ export class MyShows implements IMyShows {
    * @param {number} [search.year] - year of registration.
    * @param {string} [search.gender] - gender, any of EGender enum.
    */
-  async usersCount(search = {}) {
+  async usersCount<T>(search: SearchObjectOptions = {}): Promise<
+    RpcResponse<
+      T,
+      {
+        search: SearchObjectOptions;
+      }
+    >
+  > {
     try {
       const picked = GetSearchObjectProps(search);
 
@@ -1306,7 +1341,14 @@ export class MyShows implements IMyShows {
    * returns total number of website's users (does not require authentication).
    * @param {string} [query] - query string.
    */
-  async usersFiltersCounters<T>(query: string) {
+  async usersFiltersCounters<T>(query: string): Promise<
+    RpcResponse<
+      T,
+      {
+        query: string;
+      }
+    >
+  > {
     try {
       const response = await this.axios.post("", {
         ...this.defaultParams,

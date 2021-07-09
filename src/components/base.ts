@@ -1,42 +1,50 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 import {
   Credentials,
   DefaultParams,
-  EGender, EGenderVote,
-  EList, EShowSources,
+  EGender,
+  EGenderVote,
+  EList,
+  EShowSources,
   EShowStatus,
-  Method, RpcError,
-  RpcResponse
-} from '../types';
+  IMyShows,
+  Method,
+  RpcResponse,
+} from "../types";
 
-const AUTH_URL = 'https://myshows.me/oauth/token'
-const BASE_URL = 'https://api.myshows.me/v2/rpc/'
+const AUTH_URL = "https://myshows.me/oauth/token";
+const BASE_URL = "https://api.myshows.me/v2/rpc/";
 const DEFAULT_PARAMS: DefaultParams = {
-  jsonrpc: '2.0',
+  jsonrpc: "2.0",
   // @ts-ignore
-  method: '',
+  method: "",
   params: {},
   id: 1,
-}
+};
 
-type SearchObjectOptions = Partial<{ query: string, wasted: number, year: number, gender: EGender }>
+type SearchObjectOptions = Partial<{
+  query: string;
+  wasted: number;
+  year: number;
+  gender: EGender;
+}>;
 /**
  * Returns search object with right properties.
  * @param {object} param0 - search object.
  */
 const GetSearchObjectProps = ({
-                                query,
-                                wasted,
-                                year,
-                                gender
-                              }: SearchObjectOptions) => ({
   query,
   wasted,
   year,
   gender,
-})
+}: SearchObjectOptions) => ({
+  query,
+  wasted,
+  year,
+  gender,
+});
 
-export class MyShows {
+export class MyShows implements IMyShows {
   credentials: Credentials;
   axios: AxiosInstance;
   defaultParams: DefaultParams;
@@ -44,11 +52,11 @@ export class MyShows {
   constructor(credentials: Credentials) {
     this.credentials = {
       ...credentials,
-      grant_type: 'password',
-    }
+      grant_type: "password",
+    };
     this.axios = axios.create({
       baseURL: BASE_URL,
-    })
+    });
     this.defaultParams = DEFAULT_PARAMS;
   }
 
@@ -57,13 +65,13 @@ export class MyShows {
    */
   async login() {
     try {
-      let response = await this.axios.post(AUTH_URL, this.credentials)
+      let response = await this.axios.post(AUTH_URL, this.credentials);
 
-      this.axios.defaults.headers.common['Authorization'] = `bearer ${
-        response.data.access_token
-      }`
+      this.axios.defaults.headers.common[
+        "Authorization"
+      ] = `bearer ${response.data.access_token}`;
     } catch (error) {
-      return ({ error })
+      return { error };
     }
   }
 
@@ -74,20 +82,20 @@ export class MyShows {
    */
   async generic<T>(method: Method, params: Record<string, unknown>) {
     try {
-      const response = await this.axios.post<T>('', {
+      const response = await this.axios.post<T>("", {
         ...this.defaultParams,
         method: method,
         params,
-      })
+      });
 
       if (response) {
-        return response.data
+        return response.data;
       } else {
         // @ts-ignore
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -97,25 +105,25 @@ export class MyShows {
    */
   async listsShows<T>(
     list = EList.FAVORITES
-  ) {
+  ): Promise<RpcResponse<T, { list: EList }>> {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'lists.Shows',
+        method: "lists.Shows",
         params: {
           list,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return ({ list, result } as RpcResponse<T, { list: EList }>)
+        return { list, result };
       } else {
-        return ({ error: response.data.error } as RpcError)
+        return { error: response.data.error };
       }
     } catch (error) {
-      return ({ error } as RpcError)
+      return { error };
     }
   }
 
@@ -124,26 +132,26 @@ export class MyShows {
    * if adding was successful (requires authentication).
    * @param {int} id - Show id
    */
-  async listsAddShow<T>(id: number) {
+  async listsAddShow<T>(id: number): Promise<RpcResponse<T, { id: number }>> {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'lists.AddShow',
+        method: "lists.AddShow",
         params: {
           id,
           list: EList.FAVORITES,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { id, result }
+        return { id, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -152,26 +160,33 @@ export class MyShows {
    * if removing was successful (requires authentication).
    * @param {int} id - Episode id.
    */
-  async listsRemoveShow(id: number) {
+  async listsRemoveShow<T>(id: number): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'lists.RemoveShow',
+        method: "lists.RemoveShow",
         params: {
           id,
           list: EList.FAVORITES,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { id, result }
+        return { id, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -179,27 +194,27 @@ export class MyShows {
    * Returns a list of episodes (requires authentication).
    * @param {string} [list=MyShows.EList.FAVORITES] - A list name, any of MyShows.EList enum.
    */
-  async listsEpisodes(
+  async listsEpisodes<T>(
     list = EList.FAVORITES
-  ) {
+  ): Promise<RpcResponse<T, { list: EList }>> {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'lists.Episodes',
+        method: "lists.Episodes",
         params: {
           list,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { list, result }
+        return { list, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -208,26 +223,37 @@ export class MyShows {
    * @param {int} id - Episode id.
    * @param {string} list - A list name (can be MyShows.EList.FAVORITES or MyShows.EList.IGNORED).
    */
-  async listsAddEpisode(id: number, list: EList.FAVORITES | EList.IGNORED) {
+  async listsAddEpisode<T>(
+    id: number,
+    list: EList.FAVORITES | EList.IGNORED
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        list: EList.FAVORITES | EList.IGNORED;
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'lists.AddEpisode',
+        method: "lists.AddEpisode",
         params: {
           id,
           list,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { id, list, result }
+        return { id, list, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -236,29 +262,37 @@ export class MyShows {
    * @param {int} id - Episode id.
    * @param {string} list - A list name (can be MyShows.EList.FAVORITES or MyShows.EList.IGNORED).
    */
-  async listsRemoveEpisode(
+  async listsRemoveEpisode<T>(
     id: number,
     list: EList.FAVORITES | EList.IGNORED
-  ) {
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        list: EList.FAVORITES | EList.IGNORED;
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'lists.RemoveEpisode',
+        method: "lists.RemoveEpisode",
         params: {
           id,
           list,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { id, list, result }
+        return { id, list, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -267,29 +301,37 @@ export class MyShows {
    * @param {int} id - Show id.
    * @param {string} status - New status, any of MyShows.EShowStatus enum.
    */
-  async manageSetShowStatus(
+  async manageSetShowStatus<T>(
     id: number,
     status: EShowStatus
-  ) {
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+        status: EShowStatus;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.SetShowStatus',
+        method: "manage.SetShowStatus",
         params: {
           id,
           status,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { status, result }
+        return { id, status, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -298,26 +340,37 @@ export class MyShows {
    * @param {int} id - Show id.
    * @param {int} rating - Rating (from 0 to 5)
    */
-  async manageRateShow(id: number, rating: 1 | 2 | 3 | 4 | 5) {
+  async manageRateShow<T, R = 1 | 2 | 3 | 4 | 5>(
+    id: number,
+    rating: R
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+        rating: R;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.RateShow',
+        method: "manage.RateShow",
         params: {
           id,
           rating,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { rating, result }
+        return { id, rating, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -326,29 +379,37 @@ export class MyShows {
    * @param {int} id - Episode id.
    * @param {int} [rating] - Rating (from 0 to 5).
    */
-  async manageCheckEpisode(
+  async manageCheckEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
-    rating: 1 | 2 | 3 | 4 | 5
-  ) {
+    rating: R
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+        rating: R;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.CheckEpisode',
+        method: "manage.CheckEpisode",
         params: {
           id,
           rating,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { rating, result }
+        return { id, rating, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -356,27 +417,32 @@ export class MyShows {
    * Uncheck an episode as watched (requires authentication).
    * @param {int} id - Episode id.
    */
-  async manageUnCheckEpisode(
-    id: number
-  ) {
+  async manageUnCheckEpisode<T>(id: number): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.UnCheckEpisode',
+        method: "manage.UnCheckEpisode",
         params: {
           id,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { id, result }
+        return { id, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -385,29 +451,37 @@ export class MyShows {
    * @param {int} id - Episode id.
    * @param {int} [rating] - Rating (from 0 to 5).
    */
-  async manageRateEpisode(
+  async manageRateEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
-    rating: 1 | 2 | 3 | 4 | 5
-  ) {
+    rating: R
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+        rating: R;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.RateEpisode',
+        method: "manage.RateEpisode",
         params: {
           id,
           rating,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { rating, result }
+        return { id, rating, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -422,16 +496,23 @@ export class MyShows {
    */
   async manageRateEpisodesBulk<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
-    r1: R,
-    r2: R,
-    r3: R,
-    r4: R,
-    r5: R
-  ) {
+    r1: R[],
+    r2: R[],
+    r3: R[],
+    r4: R[],
+    r5: R[]
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.RateEpisodesBulk',
+        method: "manage.RateEpisodesBulk",
         params: {
           id,
           r1,
@@ -440,17 +521,17 @@ export class MyShows {
           r4,
           r5,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { id, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -459,57 +540,71 @@ export class MyShows {
    * @param {int} id - Show id.
    * @param {int[]} episodeIds - Episode ids.
    */
-  async manageSyncEpisodes(
+  async manageSyncEpisodes<T>(
     id: number,
     episodeIds: number[]
-  ) {
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.SyncEpisodes',
+        method: "manage.SyncEpisodes",
         params: {
           showId: id,
           episodeIds,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { id, result }
+        return { id, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
-  async manageSyncEpisodesDelta(
+  async manageSyncEpisodesDelta<T>(
     id: number,
     checkedIds: number[],
     unCheckedIds: number[]
-  ) {
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'manage.SyncEpisodesDelta',
+        method: "manage.SyncEpisodesDelta",
         params: {
           showId: id,
           checkedIds,
           unCheckedIds,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { id, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -517,25 +612,32 @@ export class MyShows {
    * Returns user profile (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileGet(login: string) {
+  async profileGet<T>(login: string): Promise<
+    RpcResponse<
+      T,
+      {
+        login: string;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Get',
+        method: "profile.Get",
         params: {
           login,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { login, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -543,25 +645,32 @@ export class MyShows {
    * Returns user public feed (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileFeed(login: string) {
+  async profileFeed<T>(login: string): Promise<
+    RpcResponse<
+      T,
+      {
+        login: string;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Feed',
+        method: "profile.Feed",
         params: {
           login,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { login, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -569,25 +678,32 @@ export class MyShows {
    * Returns user's friend list (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileFriends(login: string) {
+  async profileFriends<T>(login: string): Promise<
+    RpcResponse<
+      T,
+      {
+        login: string;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Friends',
+        method: "profile.Friends",
         params: {
           login,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { login, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -595,47 +711,54 @@ export class MyShows {
    * Returns user's followers (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileFollowers(login: string) {
+  async profileFollowers<T>(login: string): Promise<
+    RpcResponse<
+      T,
+      {
+        login: string;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Followers',
+        method: "profile.Followers",
         params: {
           login,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { login, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
   /**
    * Returns friends feed for the current user (requires authentication).
    */
-  async profileFriendsFeed() {
+  async profileFriendsFeed<T>(): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.FriendsFeed',
-      })
+        method: "profile.FriendsFeed",
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -643,25 +766,32 @@ export class MyShows {
    * Returns user's shows (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileShows(login: string) {
+  async profileShows<T>(login: string): Promise<
+    RpcResponse<
+      T,
+      {
+        login: string;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Shows',
+        method: "profile.Shows",
         params: {
           login,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { login, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -669,25 +799,32 @@ export class MyShows {
    * Returns show episodes for the current user (requires authentication).
    * @param {int} showId - ID of the show.
    */
-  async profileEpisodes(showId: number) {
+  async profileEpisodes<T>(showId: number): Promise<
+    RpcResponse<
+      T,
+      {
+        showId: number;
+      }
+    >
+  > {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Episodes',
+        method: "profile.Episodes",
         params: {
           showId,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { showId, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -696,20 +833,20 @@ export class MyShows {
    */
   async profileAchievements() {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.Achievements',
-      })
+        method: "profile.Achievements",
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -718,20 +855,20 @@ export class MyShows {
    */
   async profileNewComments() {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'profile.NewComments',
-      })
+        method: "profile.NewComments",
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -740,29 +877,26 @@ export class MyShows {
    * @param {int} id - Show id.
    * @param {boolean} [withEpisodes=true] - Include episodes in response.
    */
-  async showsGetById(
-    id: number,
-    withEpisodes = true
-  ) {
+  async showsGetById(id: number, withEpisodes = true) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.GetById',
+        method: "shows.GetById",
         params: {
           showId: id,
           withEpisodes,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -771,29 +905,26 @@ export class MyShows {
    * @param {*} id - External show id.
    * @param {*} source - Source name, any of EShowSources enum.
    */
-  async showsGetByExternalId(
-    id: number,
-    source: EShowSources
-  ) {
+  async showsGetByExternalId(id: number, source: EShowSources) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.GetByExternalId',
+        method: "shows.GetByExternalId",
         params: {
           id,
           source,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -803,23 +934,23 @@ export class MyShows {
    */
   async showsSearch(query: string) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.Search',
+        method: "shows.Search",
         params: {
           query,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -829,23 +960,23 @@ export class MyShows {
    */
   async showsSearchByFile(file: string) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.SearchByFile',
+        method: "shows.SearchByFile",
         params: {
           file,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -856,24 +987,24 @@ export class MyShows {
    */
   async showsIds(fromId: number, count: number) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.Ids',
+        method: "shows.Ids",
         params: {
           fromId,
           count,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -883,23 +1014,23 @@ export class MyShows {
    */
   async showsEpisode(id: number) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.Episode',
+        method: "shows.Episode",
         params: {
           id,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -908,20 +1039,20 @@ export class MyShows {
    */
   async showsGenres() {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.Genres',
-      })
+        method: "shows.Genres",
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -930,29 +1061,29 @@ export class MyShows {
    * @param {int} [mode=MyShows.EGenderVote.ALL] - Gender of votes, any of MyShows.EGenderVote enum.
    * @param {int} [count=500] - Number of shows (max 500).
    */
-  async showsTop(
-    mode = EGenderVote,
+  async showsTop<T>(
+    mode = EGenderVote.ALL,
     count = 500
-  ) {
+  ): Promise<RpcResponse<T>> {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.Top',
+        method: "shows.Top",
         params: {
           mode,
           count,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -960,27 +1091,25 @@ export class MyShows {
    * Marks comments as viewed for an episode (requires authentication).
    * @param {int} id - Episode id.
    */
-  async showsViewEpisodeComments(
-    id: number
-  ) {
+  async showsViewEpisodeComments(id: number) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.ViewEpisodeComments',
+        method: "shows.ViewEpisodeComments",
         params: {
           episodeId: id,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -989,29 +1118,26 @@ export class MyShows {
    * @param {int} id - Episode id.
    * @param {boolean} isTracked - Should we track new comments for this episode or not.
    */
-  async showsTrackEpisodeComments(
-    id: number,
-    isTracked: boolean
-  ) {
+  async showsTrackEpisodeComments(id: number, isTracked: boolean) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.TrackEpisodeComments',
+        method: "shows.TrackEpisodeComments",
         params: {
           episodeId: id,
           isTracked,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -1020,29 +1146,26 @@ export class MyShows {
    * @param {int} id - Comment id.
    * @param {boolean} isPositive - true/false for positive/negative vote.
    */
-  async showsVoteEpisodeComment(
-    id: number,
-    isPositive: boolean
-  ) {
+  async showsVoteEpisodeComment(id: number, isPositive: boolean) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.VoteEpisodeComment',
+        method: "shows.VoteEpisodeComment",
         params: {
           commentId: id,
           isPositive,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -1052,31 +1175,27 @@ export class MyShows {
    * @param {string} text - Comment body (between 5 and 2000 (4000 for pro users) characters).
    * @param {int} [parentId] - Parent comment id.
    */
-  async showsPostEpisodeComment(
-    id: number,
-    text: string,
-    parentId: number
-  ) {
+  async showsPostEpisodeComment(id: number, text: string, parentId: number) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.PostEpisodeComment',
+        method: "shows.PostEpisodeComment",
         params: {
           commentId: id,
           text,
           parentCommentId: parentId,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -1085,29 +1204,26 @@ export class MyShows {
    * @param {int} id - Comment id.
    * @param {boolean} [language=user's default language] - Target language.
    */
-  async showsTranslateEpisodeComment(
-    id: number,
-    language: string
-  ) {
+  async showsTranslateEpisodeComment(id: number, language: string) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'shows.TranslateEpisodeComment',
+        method: "shows.TranslateEpisodeComment",
         params: {
           commentId: id,
           language,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { result }
+        return { result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -1127,27 +1243,27 @@ export class MyShows {
     pageSize = 100
   ) {
     try {
-      const picked = GetSearchObjectProps(search)
+      const picked = GetSearchObjectProps(search);
 
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'users.Search',
+        method: "users.Search",
         params: {
           search: picked,
           page,
           pageSize,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { search: picked, page, pageSize, result }
+        return { search: picked, page, pageSize, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -1162,25 +1278,25 @@ export class MyShows {
    */
   async usersCount(search = {}) {
     try {
-      const picked = GetSearchObjectProps(search)
+      const picked = GetSearchObjectProps(search);
 
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'users.Count',
+        method: "users.Count",
         params: {
           search: picked,
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return { search: picked, result }
+        return { search: picked, result };
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 
@@ -1190,31 +1306,32 @@ export class MyShows {
    * returns total number of website's users (does not require authentication).
    * @param {string} [query] - query string.
    */
-  async usersFiltersCounters<T>(
-    query: string
-  ) {
+  async usersFiltersCounters<T>(query: string) {
     try {
-      const response = await this.axios.post('', {
+      const response = await this.axios.post("", {
         ...this.defaultParams,
-        method: 'users.FiltersCounters',
+        method: "users.FiltersCounters",
         params: {
           search: {
             query,
           },
         },
-      })
+      });
 
-      const { result } = response.data
+      const { result } = response.data;
 
       if (result) {
-        return ({ query, result } as RpcResponse<T, {
-          query: string
-        }>)
+        return { query, result } as RpcResponse<
+          T,
+          {
+            query: string;
+          }
+        >;
       } else {
-        return { error: response.data.error }
+        return { error: response.data.error };
       }
     } catch (error) {
-      return { error }
+      return { error };
     }
   }
 }

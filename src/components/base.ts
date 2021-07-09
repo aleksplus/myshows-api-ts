@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { JsonRpcResult } from "@json-rpc-tools/types";
 import {
   Credentials,
   DefaultParams,
@@ -9,6 +10,7 @@ import {
   EShowStatus,
   IMyShows,
   Method,
+  RpcError,
   RpcResponse,
 } from "../types";
 
@@ -80,7 +82,10 @@ export class MyShows implements IMyShows {
    * @param {string} method
    * @param {object} params
    */
-  async generic<T>(method: Method, params: Record<string, unknown>) {
+  async generic<P, T = JsonRpcResult<P>>(
+    method: Method,
+    params: Record<string, unknown>
+  ): Promise<T | RpcError> {
     try {
       const response = await this.axios.post<T>("", {
         ...this.defaultParams,
@@ -89,7 +94,7 @@ export class MyShows implements IMyShows {
       });
 
       if (response) {
-        return response.data;
+        return response.data as T;
       } else {
         // @ts-ignore
         return { error: response.data.error };

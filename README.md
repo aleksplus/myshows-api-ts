@@ -23,7 +23,7 @@ $ npm install @p.aleks/myshows-api
 Simple example of using generic method: 
 
 ```javascript
-import MyShows from 'myshows-api';
+import MyShows from '@p.aleks/myshows-api';
 
 const credentials = {
   client_id: 'your_client_id',

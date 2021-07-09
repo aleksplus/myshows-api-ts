@@ -1,6 +1,6 @@
 {
   "name": "@p.aleks/myshows-api",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A simple API for logging into and interacting with MyShows website. Rewritten to Typescript.",
   "main": "dist/bundle.js",
   "types": "dist/index.d.ts",

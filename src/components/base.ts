@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { JsonRpcResult } from '@json-rpc-tools/types';
 import {
   Credentials,
@@ -65,7 +65,7 @@ export class MyShows implements IMyShows {
   /**
    * Returns an error if log in fails.
    */
-  async login() {
+  async login(): Promise<RpcError | void> {
     try {
       let response = await this.axios.post(AUTH_URL, this.credentials);
 
@@ -73,7 +73,7 @@ export class MyShows implements IMyShows {
         'Authorization'
         ] = `bearer ${response.data.access_token}`;
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -87,20 +87,19 @@ export class MyShows implements IMyShows {
     params: Record<string, unknown>
   ): Promise<T | RpcError> {
     try {
-      const response = await this.axios.post<T>('', {
+      const response = await this.axios.post('', {
         ...this.defaultParams,
         method: method,
         params,
       });
 
-      if (response) {
+      if ((response as AxiosResponse<T>).data) {
         return response.data as T;
       } else {
-        // @ts-ignore
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -128,7 +127,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -156,7 +155,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -187,7 +186,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -215,7 +214,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -250,7 +249,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -285,7 +284,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -320,7 +319,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -355,7 +354,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -390,7 +389,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -419,7 +418,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -454,7 +453,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -500,7 +499,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -534,7 +533,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -565,7 +564,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -594,7 +593,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -623,7 +622,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -652,7 +651,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -681,7 +680,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -703,7 +702,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -732,7 +731,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -761,7 +760,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -783,7 +782,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -805,7 +804,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -836,7 +835,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -867,7 +866,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -893,7 +892,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -919,7 +918,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -947,7 +946,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -973,7 +972,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -995,7 +994,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1026,7 +1025,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1052,7 +1051,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1083,7 +1082,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1114,7 +1113,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1148,7 +1147,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1179,7 +1178,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1224,7 +1223,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1260,7 +1259,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 
@@ -1296,7 +1295,7 @@ export class MyShows implements IMyShows {
         return { error: response.data.error };
       }
     } catch (error) {
-      return { error };
+      return { error } as RpcError;
     }
   }
 }

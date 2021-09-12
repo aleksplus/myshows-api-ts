@@ -2,3 +2,5 @@
 /example
 .vscode
 /.idea/
+.src
+tsconfig.json

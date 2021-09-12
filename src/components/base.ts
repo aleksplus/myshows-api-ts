@@ -279,23 +279,13 @@ export class MyShows implements IMyShows {
   }): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(method: 'users.Search', params: {
-    search: {
-      query: string,
-      wasted: number,
-      year: number,
-      gender: string
-    },
+    search: SearchObjectOptions,
     page: number,
     pageSize: number
   }): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(method: 'users.Count' | 'users.Filters', params: {
-    search: {
-      query: string,
-      wasted: number,
-      year: number,
-      gender: string
-    },
+    search: SearchObjectOptions,
   }): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(method: 'notes.Get', params: {

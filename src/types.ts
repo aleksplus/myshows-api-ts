@@ -313,7 +313,7 @@ export interface IMyShowsProfile {
 
   profileFriendsFeed<T>(): Promise<RpcResponse<T>>;
 
-  profileShows<T>(login: string): Promise<RpcResponse<T,
+  profileShows<T>(login: string): Promise<RpcResponse<T[],
     {
       login: string;
     }>>;

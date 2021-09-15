@@ -1087,7 +1087,7 @@ export class MyShows implements IMyShows {
    * Returns user's shows (requires authentication only if login param omited).
    * @param {string} [login] - User name. If omited method returns data for the current user.
    */
-  async profileShows<T>(login: string): Promise<RpcResponse<T,
+  async profileShows<T>(login: string): Promise<RpcResponse<T[],
     {
       login: string;
     }>> {

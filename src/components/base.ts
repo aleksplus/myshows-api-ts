@@ -742,11 +742,11 @@ export class MyShows implements IMyShows {
    */
   async manageCheckEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
-    rating: R
+    rating?: R
   ): Promise<RpcResponse<T,
     {
       id: number;
-      rating: R;
+      rating?: R;
     }>> {
     try {
       const response = await this.axios.post('', {

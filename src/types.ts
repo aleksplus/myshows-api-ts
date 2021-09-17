@@ -228,11 +228,11 @@ export interface IMyShowsManage {
 
   manageCheckEpisode<T, R = Rating>(
     id: number,
-    rating: R
+    rating?: R
   ): Promise<RpcResponse<T,
     {
       id: number;
-      rating: R;
+      rating?: R;
     }>>;
 
   manageUnCheckEpisode<T, R = Rating>(

@@ -1,55 +1,59 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { AxiosInstance } from 'axios';
 import { JsonRpcResult } from '@json-rpc-tools/types';
 import {
   Credentials,
   DefaultParams,
-  EGender,
   EGenderVote,
   EList,
+  EMovieStatus,
+  EpisodeId,
+  EpisodeList,
+  EpisodeListWithId,
   EShowSources,
   EShowStatus,
   IMyShows,
+  WithLoginParam,
   Method,
+  OathResponse,
+  OathResponseDone,
+  OathResponseError,
+  OathResponseV3,
+  OathResponseV3Done,
+  QueryHandlerParams,
+  QueryParams,
+  Rating,
   RpcError,
   RpcResponse,
-  Rating
+  SearchObjectOptions,
+  SearchParams,
+  ShowSearchParams,
+  WithId,
+  WithMovieStatusParam,
+  WithQueryParam,
+  WithSearchParam,
+  WithShowId,
+  WithStatusParam,
+  WithRatingParam,
+  MethodV3,
 } from '../types';
-
-const AUTH_URL = 'https://myshows.me/oauth/token';
-const BASE_URL = 'https://api.myshows.me/v2/rpc/';
-const DEFAULT_PARAMS: DefaultParams = {
-  jsonrpc: '2.0',
-  // @ts-ignore
-  method: '',
-  params: {},
-  id: 1,
-};
-
-type SearchObjectOptions = Partial<{
-  query: string;
-  wasted: number;
-  year: number;
-  gender: EGender;
-}>;
-/**
- * Returns search object with right properties.
- * @param {object} param0 - search object.
- */
-const GetSearchObjectProps = ({
-                                query,
-                                wasted,
-                                year,
-                                gender,
-                              }: SearchObjectOptions) => ({
-  query,
-  wasted,
-  year,
-  gender,
-});
+import {
+  AUTH_URL,
+  AUTH_URL_V3,
+  BASE_URL_V2,
+  BASE_URL_V3,
+  DEFAULT_PARAMS,
+} from '../constants';
+import {
+  createQueryInstance,
+  getSearchObjectProps,
+  handleErrorResponse,
+  queryHandler,
+} from '../utils';
 
 export class MyShows implements IMyShows {
-  credentials: Credentials;
+  private readonly credentials: Credentials;
   axios: AxiosInstance;
+  axiosV3: AxiosInstance;
   defaultParams: DefaultParams;
 
   constructor(credentials: Credentials) {
@@ -57,9 +61,8 @@ export class MyShows implements IMyShows {
       ...credentials,
       grant_type: 'password',
     };
-    this.axios = axios.create({
-      baseURL: BASE_URL,
-    });
+    this.axios = createQueryInstance(BASE_URL_V2);
+    this.axiosV3 = createQueryInstance(BASE_URL_V3);
     this.defaultParams = DEFAULT_PARAMS;
   }
 
@@ -68,14 +71,79 @@ export class MyShows implements IMyShows {
    */
   async login(): Promise<RpcError | void> {
     try {
-      let response = await this.axios.post(AUTH_URL, this.credentials);
+      const response = await this.axios.post<OathResponse>(
+        AUTH_URL,
+        this.credentials
+      );
 
-      this.axios.defaults.headers.common[
-        'Authorization'
-        ] = `bearer ${response.data.access_token}`;
+      if ((response.data as OathResponseError).error) {
+        return handleErrorResponse(response);
+      }
+
+      this.axios.defaults.headers.common['Authorization'] = `bearer ${
+        (response.data as OathResponseDone).access_token
+      }`;
     } catch (error) {
       return { error } as RpcError;
     }
+  }
+
+  /**
+   * Returns an error if log in fails.
+   */
+  async loginV3(): Promise<RpcError | void> {
+    try {
+      const response = await this.axiosV3.post<OathResponseV3>(AUTH_URL_V3, {
+        login: this.credentials.username,
+        password: this.credentials.password,
+      });
+
+      if ((response.data as OathResponseError).error) {
+        return handleErrorResponse(response);
+      }
+
+      this.axiosV3.defaults.headers.common.cookies =
+        response.headers['set-cookie']?.join(';') ?? '';
+      this.axiosV3.defaults.headers.common['authorization2'] = `Bearer ${
+        (response.data as OathResponseV3Done).token
+      }`;
+    } catch (error) {
+      return { error } as RpcError;
+    }
+  }
+
+  /**
+   * Internal query wrapper
+   * @param params
+   * @param instance
+   * @private
+   */
+  private async query<T, P = QueryParams>(
+    params: Omit<QueryHandlerParams<P>, 'query' | 'defaultParams'>,
+    instance?: AxiosInstance
+  ) {
+    return await queryHandler<T, P>({
+      query: instance ?? this.axios,
+      defaultParams: this.defaultParams,
+      ...params,
+    });
+  }
+
+  /**
+   * Internal query wrapper V3
+   * @param params
+   * @param instance
+   * @private
+   */
+  private async queryV3<T, P = QueryParams>(
+    params: Omit<QueryHandlerParams<P, MethodV3>, 'query' | 'defaultParams'>,
+    instance?: AxiosInstance
+  ) {
+    return await queryHandler<T, P>({
+      query: this.axiosV3,
+      defaultParams: this.defaultParams,
+      ...params,
+    });
   }
 
   /**
@@ -83,401 +151,597 @@ export class MyShows implements IMyShows {
    * @param {string} method
    * @param {object} params
    */
-  async generic<T>(method: 'profile.Get' | 'profile.Feed' | 'profile.Friends' | 'profile.Followers' | 'profile.Friendship' | 'profile.Shows' | 'profile.EpisodeCommentsCount' | 'profile.NewsCommentsCount' | 'users.Follow' | 'users.UnFollow', params: {
-    login: string
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method:
+      | 'profile.Get'
+      | 'profile.Feed'
+      | 'profile.Friends'
+      | 'profile.Followers'
+      | 'profile.Friendship'
+      | 'profile.Shows'
+      | 'profile.EpisodeCommentsCount'
+      | 'profile.NewsCommentsCount'
+      | 'users.Follow'
+      | 'users.UnFollow',
+    params: WithLoginParam
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'profile.FriendsFeed', params: object): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.FriendsFeed',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'profile.ShowStatuses', params: {
-    showIds?: number[];
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.Episodes' | 'profile.Show', params: {
-    showId: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.Episode', params: {
-    episodeId: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.Achievements', params: {
-    login: string,
-    withPublic: false
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.Achievement', params: {
-    alias: string,
-    key: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.NewComments' | 'profile.NewNewsComments' | 'profile.NewCommentReplies' | 'profile.NewNewsCommentReplies' | 'profile.Counters' | 'profile.Settings', params: object): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.SaveSettings', params: {
-    settings: Array<{
-      alias: string,
-      value: string
-    }>
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.EpisodeComments' | 'profile.NewsComments', params: {
-    login: string,
-    page: number,
-    pageSize: number,
-    sort: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'profile.MarkCommentsAsViewed', params: object): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Get', params: {
-    search: {
-      network: number,
-      genre: number,
-      country: string,
-      year: number,
-      watching: number,
-      category: string,
-      status: string,
-      sort: string,
-      query: string
-    },
-    page: number,
-    pageSize: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Count' | 'shows.Filters', params: {
-    search: {
-      network: number,
-      genre: number,
-      country: string,
-      year: number,
-      watching: number,
-      category: string,
-      status: string,
-      sort: string,
-      query: string
-    },
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.GetById', params: {
-    showId: number,
-    withEpisodes: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.GetByExternalId', params: {
-    id: number,
-    source: EShowSources
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Search', params: {
-    query: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.SearchByFile', params: {
-    file: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Ids', params: {
-    fromId: number,
-    count: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Episode', params: {
-    id: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Genres', params: object): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.Top', params: {
-    mode: 'all',
-    count: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.EpisodeComments' | 'shows.ViewEpisodeComments', params: {
-    episodeId: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-
-  async generic<T>(method: 'shows.TrackEpisodeComments', params: {
-    episodeId: number,
-    isTracked: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.VoteEpisodeComment', params: {
-    commentId: number,
-    isPositive: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.PostEpisodeComment', params: {
-    episodeId: number,
-    text: string,
-    image: string,
-    parentCommentId: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.UpdateEpisodeComment', params: {
-    commentId: number,
-    text: string,
-    image: string,
-    deleteImage: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.DeleteEpisodeComment', params: {
-    commentId: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'shows.TranslateEpisodeComment', params: {
-    commentId: number,
-    language: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'lists.Episodes' | 'lists.Shows', params: {
-    list: EList
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'lists.AddEpisode' | 'lists.RemoveEpisode' | 'lists.AddShow' | 'lists.RemoveShow', params: {
-    id: number,
-    list: EList
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.SetShowStatus', params: {
-    id: number,
-    status: EShowStatus
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.RateShow' | 'manage.CheckEpisode' | 'manage.RateEpisode', params: {
-    id: number,
-    rating: Rating
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.UnCheckEpisode', params: {
-    id: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.RateEpisodesBulk', params: {
-    r1: number[],
-    r2: number[],
-    r3: number[],
-    r4: number[],
-    r5: number[]
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.SyncEpisodes', params: {
-    showId: number,
-    episodeIds: number[]
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.SyncEpisodesDelta', params: {
-    showId: number,
-    checkedIds: number[],
-    unCheckedIds: number[]
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'manage.MoveEpisodeDate', params: {
-    episodeId: number,
-    shiftDays: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'users.Search', params: {
-    search: SearchObjectOptions,
-    page: number,
-    pageSize: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'users.Count' | 'users.Filters', params: {
-    search: SearchObjectOptions,
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'notes.Get', params: {
-    search: {
-      isShow: boolean,
-      isEpisode: boolean
-    },
-    page: number,
-    pageSize: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'notes.Count', params: {
-    search: {
-      isShow: boolean,
-      isEpisode: boolean
+  async generic<T>(
+    method: 'profile.ShowStatuses',
+    params: {
+      showIds?: number[];
     }
-  }): Promise<RpcResponse<T> | RpcError>;
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'notes.Save', params: {
-    showId: number,
-    text: string,
-    episodeId: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'notes.Delete' | 'notes.Restore', params: {
-    id: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'auth.Register', params: {
-    clientId: string,
-    sig: string,
-    login: string,
-    email: string,
-    password: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'auth.LoginByAppleID', params: {
-    clientId: string,
-    sig: string,
-    identityToken: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'auth.UnlinkSocialProfile', params: {
-    provider: EShowSources
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'auth.LinkSocialProfile', params: {
-    provider: EShowSources,
-    returnUrl: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'iap.ValidateReceiptIOS', params: {
-    receiptData: string,
-    transactionId: string,
-    isSandbox: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'iap.ValidateReceiptAndroid', params: {
-    payload: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'site.Meta', params: {
-    url: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'site.Counters', params: object): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'site.ShowsPopular' | 'site.ShowsOnline' | 'site.ShowsOnlinePromo', params: {
-    count: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'site.TopEpisodeComments', params: {
-    episodeCount: number,
-    days: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'site.PaymentTypes' | 'site.Products', params: object): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'site.CreateProTransaction', params: {
-    product: string,
-    paymentType: string
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'news.Get', params: {
-    search: {
-      showId: number,
-      episodeId: number,
-      category: string,
-      tag: string,
-      isTrailer: boolean,
-      similarNewsId: number,
-      forCurrentUser: boolean
-    },
-    page: number,
-    pageSize: number
-  }): Promise<RpcResponse<T> | RpcError>;
-
-  async generic<T>(method: 'news.Count', params: {
-    search: {
-      showId: number,
-      episodeId: number,
-      category: string,
-      tag: string,
-      isTrailer: boolean,
-      similarNewsId: number,
-      forCurrentUser: boolean
+  async generic<T>(
+    method: 'profile.Episodes' | 'profile.Show',
+    params: {
+      showId: number;
     }
-  }): Promise<RpcResponse<T> | RpcError>;
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.GetById' | 'news.Comments' | 'news.ViewComments', params: {
-    newsId: number
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.Episode',
+    params: {
+      episodeId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.Categories', params: object): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.Achievements',
+    params: {
+      login: string;
+      withPublic: false;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.TrackComments', params: {
-    newsId: number,
-    isTracked: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.Achievement',
+    params: {
+      alias: string;
+      key: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.VoteComment', params: {
-    commentId: number,
-    isPositive: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method:
+      | 'profile.NewComments'
+      | 'profile.NewNewsComments'
+      | 'profile.NewCommentReplies'
+      | 'profile.NewNewsCommentReplies'
+      | 'profile.Counters'
+      | 'profile.Settings',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.PostComment', params: {
-    newsId: number,
-    text: string,
-    image: string,
-    parentCommentId: number
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.SaveSettings',
+    params: {
+      settings: Array<{
+        alias: string;
+        value: string;
+      }>;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.UpdateComment', params: {
-    commentId: number,
-    text: string,
-    image: string,
-    deleteImage: boolean
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.EpisodeComments' | 'profile.NewsComments',
+    params: {
+      login: string;
+      page: number;
+      pageSize: number;
+      sort: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.DeleteComment', params: {
-    commentId: number
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'profile.MarkCommentsAsViewed',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'news.TranslateComment', params: {
-    commentId: number,
-    language: string
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'shows.Get',
+    params: {
+      search: ShowSearchParams;
+      page: number;
+      pageSize: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'push.RegisterTokenIOS', params: {
-    token: string,
-    idfa: string
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'shows.Count' | 'shows.Filters',
+    params: {
+      search: ShowSearchParams;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'push.RegisterTokenAndroid', params: {
-    token: string,
-    gaid: string
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'shows.GetById',
+    params: {
+      showId: number;
+      withEpisodes: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'push.RegisterTokenWeb', params: {
-    token: string
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'shows.GetByExternalId',
+    params: {
+      id: number;
+      source: EShowSources;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'push.SendTestAndroid' | 'push.SendTestIOS', params: {
-    pushType: string
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'shows.Search',
+    params: WithQueryParam
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'recommendation.Get', params: {
-    count: number
-  }): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(
+    method: 'shows.SearchByFile',
+    params: {
+      file: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(method: 'recommendation.Reject' | 'recommendation.UndoReject', params: {
-    id: number
-  }): Promise<RpcResponse<T> | RpcError>;
-  async generic<P, T = JsonRpcResult<P>>(
+  async generic<T>(
+    method: 'shows.Ids',
+    params: {
+      fromId: number;
+      count: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.Episode',
+    params: EpisodeId
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.Genres',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.Top',
+    params: {
+      mode: 'all';
+      count: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.EpisodeComments' | 'shows.ViewEpisodeComments',
+    params: {
+      episodeId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.TrackEpisodeComments',
+    params: {
+      episodeId: number;
+      isTracked: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.VoteEpisodeComment',
+    params: {
+      commentId: number;
+      isPositive: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.PostEpisodeComment',
+    params: {
+      episodeId: number;
+      text: string;
+      image: string;
+      parentCommentId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.UpdateEpisodeComment',
+    params: {
+      commentId: number;
+      text: string;
+      image: string;
+      deleteImage: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.DeleteEpisodeComment',
+    params: {
+      commentId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'shows.TranslateEpisodeComment',
+    params: {
+      commentId: number;
+      language: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'lists.Episodes' | 'lists.Shows',
+    params: {
+      list: EList;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method:
+      | 'lists.AddEpisode'
+      | 'lists.RemoveEpisode'
+      | 'lists.AddShow'
+      | 'lists.RemoveShow',
+    params: {
+      id: number;
+      list: EList;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.SetShowStatus',
+    params: {
+      id: number;
+      status: EShowStatus;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.SetMovieStatus',
+    params: {
+      id: number;
+      status: EMovieStatus;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.RateShow' | 'manage.CheckEpisode' | 'manage.RateEpisode',
+    params: {
+      id: number;
+      rating: Rating;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.UnCheckEpisode',
+    params: EpisodeId
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.RateEpisodesBulk',
+    params: {
+      r1: number[];
+      r2: number[];
+      r3: number[];
+      r4: number[];
+      r5: number[];
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.SyncEpisodes',
+    params: {
+      showId: number;
+      episodeIds: number[];
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.SyncEpisodesDelta',
+    params: {
+      showId: number;
+      checkedIds: number[];
+      unCheckedIds: number[];
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'manage.MoveEpisodeDate',
+    params: {
+      episodeId: number;
+      shiftDays: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'users.Search',
+    params: {
+      search: SearchObjectOptions;
+      page: number;
+      pageSize: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'users.Count' | 'users.Filters',
+    params: SearchParams
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'notes.Get',
+    params: {
+      search: {
+        isShow: boolean;
+        isEpisode: boolean;
+      };
+      page: number;
+      pageSize: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'notes.Count',
+    params: {
+      search: {
+        isShow: boolean;
+        isEpisode: boolean;
+      };
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'notes.Save',
+    params: {
+      showId: number;
+      text: string;
+      episodeId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'notes.Delete' | 'notes.Restore',
+    params: EpisodeId
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'auth.Register',
+    params: {
+      clientId: string;
+      sig: string;
+      login: string;
+      email: string;
+      password: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'auth.LoginByAppleID',
+    params: {
+      clientId: string;
+      sig: string;
+      identityToken: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'auth.UnlinkSocialProfile',
+    params: {
+      provider: EShowSources;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'auth.LinkSocialProfile',
+    params: {
+      provider: EShowSources;
+      returnUrl: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'iap.ValidateReceiptIOS',
+    params: {
+      receiptData: string;
+      transactionId: string;
+      isSandbox: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'iap.ValidateReceiptAndroid',
+    params: {
+      payload: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'site.Meta',
+    params: {
+      url: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'site.Counters',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'site.ShowsPopular' | 'site.ShowsOnline' | 'site.ShowsOnlinePromo',
+    params: {
+      count: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'site.TopEpisodeComments',
+    params: {
+      episodeCount: number;
+      days: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'site.PaymentTypes' | 'site.Products',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'site.CreateProTransaction',
+    params: {
+      product: string;
+      paymentType: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.Get',
+    params: {
+      search: {
+        showId: number;
+        episodeId: number;
+        category: string;
+        tag: string;
+        isTrailer: boolean;
+        similarNewsId: number;
+        forCurrentUser: boolean;
+      };
+      page: number;
+      pageSize: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.Count',
+    params: {
+      search: {
+        showId: number;
+        episodeId: number;
+        category: string;
+        tag: string;
+        isTrailer: boolean;
+        similarNewsId: number;
+        forCurrentUser: boolean;
+      };
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.GetById' | 'news.Comments' | 'news.ViewComments',
+    params: {
+      newsId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.Categories',
+    params: object
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.TrackComments',
+    params: {
+      newsId: number;
+      isTracked: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.VoteComment',
+    params: {
+      commentId: number;
+      isPositive: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.PostComment',
+    params: {
+      newsId: number;
+      text: string;
+      image: string;
+      parentCommentId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.UpdateComment',
+    params: {
+      commentId: number;
+      text: string;
+      image: string;
+      deleteImage: boolean;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.DeleteComment',
+    params: {
+      commentId: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'news.TranslateComment',
+    params: {
+      commentId: number;
+      language: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'push.RegisterTokenIOS',
+    params: {
+      token: string;
+      idfa: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'push.RegisterTokenAndroid',
+    params: {
+      token: string;
+      gaid: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'push.RegisterTokenWeb',
+    params: {
+      token: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'push.SendTestAndroid' | 'push.SendTestIOS',
+    params: {
+      pushType: string;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'recommendation.Get',
+    params: {
+      count: number;
+    }
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<T>(
+    method: 'recommendation.Reject' | 'recommendation.UndoReject',
+    params: EpisodeId
+  ): Promise<RpcResponse<T> | RpcError>;
+
+  async generic<V, T = JsonRpcResult<V>>(
     method: Method,
-    params: Record<string, unknown>
-  ): Promise<T | RpcError> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: method,
-        params,
-      });
-
-      if ((response as AxiosResponse<T>).data) {
-        return response.data as T;
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    params: Record<string, any>
+  ): Promise<RpcResponse<T | RpcError>> {
+    return await this.query<T, Record<string, any>>({
+      method: method,
+      params,
+    });
   }
 
   /**
@@ -486,26 +750,13 @@ export class MyShows implements IMyShows {
    */
   async listsShows<T>(
     list = EList.FAVORITES
-  ): Promise<RpcResponse<T, { list: EList }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'lists.Shows',
-        params: {
-          list,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { list, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, EpisodeList>> {
+    return await this.query<T, EpisodeList>({
+      method: 'lists.Shows',
+      params: {
+        list,
+      },
+    });
   }
 
   /**
@@ -514,26 +765,13 @@ export class MyShows implements IMyShows {
    * @param {int} id - Show id
    */
   async listsAddShow<T>(id: number): Promise<RpcResponse<T, { id: number }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'lists.AddShow',
-        params: {
-          id,
-          list: EList.FAVORITES,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, EpisodeListWithId>({
+      method: 'lists.AddShow',
+      params: {
+        id,
+        list: EList.FAVORITES,
+      },
+    });
   }
 
   /**
@@ -541,30 +779,14 @@ export class MyShows implements IMyShows {
    * if removing was successful (requires authentication).
    * @param {int} id - Episode id.
    */
-  async listsRemoveShow<T>(id: number): Promise<RpcResponse<T,
-    {
-      id: number;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'lists.RemoveShow',
-        params: {
-          id,
-          list: EList.FAVORITES,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async listsRemoveShow<T>(id: number): Promise<RpcResponse<T, EpisodeId>> {
+    return await this.query<T, EpisodeListWithId>({
+      method: 'lists.RemoveShow',
+      params: {
+        id,
+        list: EList.FAVORITES,
+      },
+    });
   }
 
   /**
@@ -573,26 +795,13 @@ export class MyShows implements IMyShows {
    */
   async listsEpisodes<T>(
     list = EList.FAVORITES
-  ): Promise<RpcResponse<T, { list: EList }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'lists.Episodes',
-        params: {
-          list,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { list, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, EpisodeList>> {
+    return await this.query<T, EpisodeList>({
+      method: 'lists.Episodes',
+      params: {
+        list,
+      },
+    });
   }
 
   /**
@@ -603,31 +812,14 @@ export class MyShows implements IMyShows {
   async listsAddEpisode<T>(
     id: number,
     list: EList.FAVORITES | EList.IGNORED
-  ): Promise<RpcResponse<T,
-    {
-      list: EList.FAVORITES | EList.IGNORED;
-      id: number;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'lists.AddEpisode',
-        params: {
-          id,
-          list,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, list, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, EpisodeListWithId>> {
+    return await this.query<T, EpisodeListWithId>({
+      method: 'lists.AddEpisode',
+      params: {
+        id,
+        list,
+      },
+    });
   }
 
   /**
@@ -638,31 +830,14 @@ export class MyShows implements IMyShows {
   async listsRemoveEpisode<T>(
     id: number,
     list: EList.FAVORITES | EList.IGNORED
-  ): Promise<RpcResponse<T,
-    {
-      list: EList.FAVORITES | EList.IGNORED;
-      id: number;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'lists.RemoveEpisode',
-        params: {
-          id,
-          list,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, list, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, EpisodeListWithId>> {
+    return await this.query<T, EpisodeListWithId>({
+      method: 'lists.RemoveEpisode',
+      params: {
+        id,
+        list,
+      },
+    });
   }
 
   /**
@@ -670,34 +845,30 @@ export class MyShows implements IMyShows {
    * @param {int} id - Show id.
    * @param {string} status - New status, any of MyShows.EShowStatus enum.
    */
-  async manageSetShowStatus<T>(
-    id: number,
-    status: EShowStatus
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      status: EShowStatus;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.SetShowStatus',
-        params: {
-          id,
-          status,
-        },
-      });
+  async manageSetShowStatus<T>(id: number, status: EShowStatus) {
+    return await this.query<T, WithStatusParam<EShowStatus>>({
+      method: 'manage.SetShowStatus',
+      params: {
+        id,
+        status,
+      },
+    });
+  }
 
-      const { result } = response.data;
-
-      if (result) {
-        return { id, status, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  /**
+   * @description Change movie status (requires authentication).
+   * @version: 3
+   * @param {int} id - Movie id.
+   * @param {string} status - New status, any of MyShows.EMovieStatus enum.
+   */
+  async manageSetMovieStatus<T>(id: number, status: EMovieStatus) {
+    return await this.queryV3<T, WithMovieStatusParam<EMovieStatus>>({
+      method: 'manage.SetMovieStatus',
+      params: {
+        movieId: id,
+        status,
+      },
+    });
   }
 
   /**
@@ -708,31 +879,14 @@ export class MyShows implements IMyShows {
   async manageRateShow<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
     rating: R
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating: R;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.RateShow',
-        params: {
-          id,
-          rating,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, rating, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, WithRatingParam<R> & WithId>> {
+    return await this.query<T, WithRatingParam<R> & WithId>({
+      method: 'manage.RateShow',
+      params: {
+        id,
+        rating,
+      },
+    });
   }
 
   /**
@@ -743,60 +897,29 @@ export class MyShows implements IMyShows {
   async manageCheckEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
     rating?: R
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating?: R;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.CheckEpisode',
-        params: {
-          id,
-          rating,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, rating, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, WithRatingParam<R> & WithId>> {
+    return await this.query<T, WithRatingParam<R> & WithId>({
+      method: 'manage.CheckEpisode',
+      params: {
+        id,
+        rating,
+      },
+    });
   }
 
   /**
    * Uncheck an episode as watched (requires authentication).
    * @param {int} id - Episode id.
    */
-  async manageUnCheckEpisode<T>(id: number): Promise<RpcResponse<T,
-    {
-      id: number;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.UnCheckEpisode',
-        params: {
-          id,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async manageUnCheckEpisode<T>(
+    id: number
+  ): Promise<RpcResponse<T, EpisodeId>> {
+    return await this.query<T, EpisodeId>({
+      method: 'manage.UnCheckEpisode',
+      params: {
+        id,
+      },
+    });
   }
 
   /**
@@ -807,31 +930,14 @@ export class MyShows implements IMyShows {
   async manageRateEpisode<T, R = 1 | 2 | 3 | 4 | 5>(
     id: number,
     rating: R
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating: R;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.RateEpisode',
-        params: {
-          id,
-          rating,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, rating, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, WithRatingParam<R> & WithId>> {
+    return await this.query<T, WithRatingParam<R> & WithId>({
+      method: 'manage.RateEpisode',
+      params: {
+        id,
+        rating,
+      },
+    });
   }
 
   /**
@@ -850,34 +956,18 @@ export class MyShows implements IMyShows {
     r3: R[],
     r4: R[],
     r5: R[]
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.RateEpisodesBulk',
-        params: {
-          id,
-          r1,
-          r2,
-          r3,
-          r4,
-          r5,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T, EpisodeId & Record<`r${number}`, R[]>>> {
+    return await this.query<T, EpisodeId & Record<`r${number}`, R[]>>({
+      method: 'manage.RateEpisodesBulk',
+      params: {
+        id,
+        r1,
+        r2,
+        r3,
+        r4,
+        r5,
+      },
+    });
   }
 
   /**
@@ -890,28 +980,20 @@ export class MyShows implements IMyShows {
     episodeIds: number[]
   ): Promise<RpcResponse<T,
     {
-      id: number;
+      showId: number;
+      episodeIds: number[];
     }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.SyncEpisodes',
-        params: {
-          showId: id,
-          episodeIds,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T,
+      {
+        showId: number;
+        episodeIds: number[];
+      }>({
+      method: 'manage.SyncEpisodes',
+      params: {
+        showId: id,
+        episodeIds,
+      },
+    });
   }
 
   async manageSyncEpisodesDelta<T>(
@@ -920,269 +1002,139 @@ export class MyShows implements IMyShows {
     unCheckedIds: number[]
   ): Promise<RpcResponse<T,
     {
-      id: number;
+      showId: number;
+      checkedIds: number[];
+      unCheckedIds: number[];
     }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'manage.SyncEpisodesDelta',
-        params: {
-          showId: id,
-          checkedIds,
-          unCheckedIds,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { id, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T,
+      {
+        showId: number;
+        checkedIds: number[];
+        unCheckedIds: number[];
+      }>({
+      method: 'manage.SyncEpisodesDelta',
+      params: {
+        showId: id,
+        checkedIds,
+        unCheckedIds,
+      },
+    });
   }
 
   /**
    * Returns user profile (requires authentication only if login param omited).
-   * @param {string} [login] - User name. If omited method returns data for the current user.
+   * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileGet<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Get',
-        params: {
-          login,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { login, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async profileGet<T>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
+    return await this.query<T, WithLoginParam>({
+      method: 'profile.Get',
+      params: {
+        login,
+      },
+    });
   }
 
   /**
    * Returns user public feed (requires authentication only if login param omited).
-   * @param {string} [login] - User name. If omited method returns data for the current user.
+   * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileFeed<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Feed',
-        params: {
-          login,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { login, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async profileFeed<T>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
+    return await this.query<T, WithLoginParam>({
+      method: 'profile.Feed',
+      params: {
+        login,
+      },
+    });
   }
 
   /**
    * Returns user's friend list (requires authentication only if login param omited).
-   * @param {string} [login] - User name. If omited method returns data for the current user.
+   * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileFriends<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Friends',
-        params: {
-          login,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { login, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async profileFriends<T>(
+    login: string
+  ): Promise<RpcResponse<T, WithLoginParam>> {
+    return await this.query<T, WithLoginParam>({
+      method: 'profile.Friends',
+      params: {
+        login,
+      },
+    });
   }
 
   /**
    * Returns user's followers (requires authentication only if login param omited).
-   * @param {string} [login] - User name. If omited method returns data for the current user.
+   * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileFollowers<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Followers',
-        params: {
-          login,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { login, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async profileFollowers<T>(
+    login: string
+  ): Promise<RpcResponse<T, WithLoginParam>> {
+    return await this.query<T, WithLoginParam>({
+      method: 'profile.Followers',
+      params: {
+        login,
+      },
+    });
   }
 
   /**
    * Returns friends feed for the current user (requires authentication).
    */
   async profileFriendsFeed<T>(): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.FriendsFeed',
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'profile.FriendsFeed',
+      params: {},
+    });
   }
 
   /**
    * Returns user's shows (requires authentication only if login param omited).
-   * @param {string} [login] - User name. If omited method returns data for the current user.
+   * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileShows<T>(login: string): Promise<RpcResponse<T[],
-    {
-      login: string;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Shows',
-        params: {
-          login,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { login, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async profileShows<T>(
+    login: string
+  ): Promise<RpcResponse<T[], WithLoginParam>> {
+    return await this.query<T[], WithLoginParam>({
+      method: 'profile.Shows',
+      params: {
+        login,
+      },
+    });
   }
 
   /**
    * Returns show episodes for the current user (requires authentication).
    * @param {int} showId - ID of the show.
    */
-  async profileEpisodes<T>(showId: number): Promise<RpcResponse<T,
-    {
-      showId: number;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Episodes',
-        params: {
-          showId,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { showId, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async profileEpisodes<T>(
+    showId: number
+  ): Promise<RpcResponse<T, WithShowId>> {
+    return await this.query<T, WithShowId>({
+      method: 'profile.Episodes',
+      params: {
+        showId,
+      },
+    });
   }
 
   /**
    * Returns list of achievements for the current user (requires authentication).
    */
   async profileAchievements<T>(): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.Achievements',
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'profile.Achievements',
+      params: {},
+    });
   }
 
   /**
    * Returns list of achievements for the current user (requires authentication).
    */
   async profileNewComments<T>(): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'profile.NewComments',
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'profile.NewComments',
+      params: {},
+    });
   }
 
   /**
@@ -1193,27 +1145,22 @@ export class MyShows implements IMyShows {
   async showsGetById<T>(
     id: number,
     withEpisodes = true
-  ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.GetById',
-        params: {
-          showId: id,
-          withEpisodes,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T,
+    {
+      showId: number;
+      withEpisodes: boolean;
+    }>> {
+    return await this.query<T,
+      {
+        showId: number;
+        withEpisodes: boolean;
+      }>({
+      method: 'shows.GetById',
+      params: {
+        showId: id,
+        withEpisodes,
+      },
+    });
   }
 
   /**
@@ -1224,79 +1171,63 @@ export class MyShows implements IMyShows {
   async showsGetByExternalId<T>(
     id: number,
     source: EShowSources
-  ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.GetByExternalId',
-        params: {
-          id,
-          source,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  ): Promise<RpcResponse<T,
+    {
+      id: number;
+      source: EShowSources;
+    }>> {
+    return await this.query<T,
+      {
+        id: number;
+        source: EShowSources;
+      }>({
+      method: 'shows.GetByExternalId',
+      params: {
+        id,
+        source,
+      },
+    });
   }
 
   /**
    * Returns matched shows (does not require authentication).
    * @param {string} query - Query string.
    */
-  async showsSearch<T>(query: string) {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.Search',
-        params: {
-          query,
-        },
-      });
+  async showsSearch<T>(query: string): Promise<RpcResponse<T, WithQueryParam>> {
+    return await this.query<T, WithQueryParam>({
+      method: 'shows.Search',
+      params: {
+        query,
+      },
+    });
+  }
 
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  /**
+   * Returns matched movies (does not require authentication).
+   * @param {string} query - Query string.
+   */
+  async moviesSearch<T>(query: string) {
+    return await this.queryV3<T, WithSearchParam<WithQueryParam>>({
+      method: 'movies.GetCatalog',
+      params: {
+        search: { query },
+      },
+    });
   }
 
   /**
    * Returns matched shows (does not require authentication).
    * @param {string} file - Query string.
    */
-  async showsSearchByFile<T>(file: string): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.SearchByFile',
-        params: {
-          file,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async showsSearchByFile<T>(
+    file: string
+  ): Promise<RpcResponse<T, { file: string }>> {
+    return await this.query<T, { file: string }>({
+      method: 'shows.SearchByFile',
+      params: {
+        file,
+      },
+    });
   }
 
   /**
@@ -1304,27 +1235,17 @@ export class MyShows implements IMyShows {
    * @param {int} fromId - Starting show id (excluding).
    * @param {int} [count=100] - Number of ids (max 1000).
    */
-  async showsIds<T>(fromId: number, count: number): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.Ids',
-        params: {
-          fromId,
-          count,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+  async showsIds<T>(
+    fromId: number,
+    count: number
+  ): Promise<RpcResponse<T, { fromId: number; count: number }>> {
+    return await this.query<T, { fromId: number; count: number }>({
+      method: 'shows.Ids',
+      params: {
+        fromId,
+        count,
+      },
+    });
   }
 
   /**
@@ -1332,47 +1253,22 @@ export class MyShows implements IMyShows {
    * @param {int} id - Episode id.
    */
   async showsEpisode<T>(id: number): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.Episode',
-        params: {
-          id,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, WithId>({
+      method: 'shows.Episode',
+      params: {
+        id,
+      },
+    });
   }
 
   /**
    * Returns a list of genres (does not require authentication).
    */
   async showsGenres<T>(): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.Genres',
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.Genres',
+      params: {},
+    });
   }
 
   /**
@@ -1384,26 +1280,13 @@ export class MyShows implements IMyShows {
     mode = EGenderVote.ALL,
     count = 500
   ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.Top',
-        params: {
-          mode,
-          count,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.Top',
+      params: {
+        mode,
+        count,
+      },
+    });
   }
 
   /**
@@ -1411,25 +1294,12 @@ export class MyShows implements IMyShows {
    * @param {int} id - Episode id.
    */
   async showsViewEpisodeComments<T>(id: number): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.ViewEpisodeComments',
-        params: {
-          episodeId: id,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.ViewEpisodeComments',
+      params: {
+        episodeId: id,
+      },
+    });
   }
 
   /**
@@ -1441,26 +1311,13 @@ export class MyShows implements IMyShows {
     id: number,
     isTracked: boolean
   ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.TrackEpisodeComments',
-        params: {
-          episodeId: id,
-          isTracked,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.TrackEpisodeComments',
+      params: {
+        episodeId: id,
+        isTracked,
+      },
+    });
   }
 
   /**
@@ -1472,26 +1329,13 @@ export class MyShows implements IMyShows {
     id: number,
     isPositive: boolean
   ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.VoteEpisodeComment',
-        params: {
-          commentId: id,
-          isPositive,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.VoteEpisodeComment',
+      params: {
+        commentId: id,
+        isPositive,
+      },
+    });
   }
 
   /**
@@ -1505,27 +1349,14 @@ export class MyShows implements IMyShows {
     text: string,
     parentId: number
   ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.PostEpisodeComment',
-        params: {
-          commentId: id,
-          text,
-          parentCommentId: parentId,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.PostEpisodeComment',
+      params: {
+        commentId: id,
+        text,
+        parentCommentId: parentId,
+      },
+    });
   }
 
   /**
@@ -1537,26 +1368,13 @@ export class MyShows implements IMyShows {
     id: number,
     language: string
   ): Promise<RpcResponse<T>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'shows.TranslateEpisodeComment',
-        params: {
-          commentId: id,
-          language,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, {}>({
+      method: 'shows.TranslateEpisodeComment',
+      params: {
+        commentId: id,
+        language,
+      },
+    });
   }
 
   /**
@@ -1573,35 +1391,17 @@ export class MyShows implements IMyShows {
     search: SearchObjectOptions = {},
     page = 0,
     pageSize = 100
-  ): Promise<RpcResponse<T,
-    {
-      search: SearchObjectOptions;
-      page: number;
-      pageSize: number;
-    }>> {
-    try {
-      const picked = GetSearchObjectProps(search);
+  ): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>> {
+    const picked = getSearchObjectProps(search);
 
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'users.Search',
-        params: {
-          search: picked,
-          page,
-          pageSize,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { search: picked, page, pageSize, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, WithSearchParam<SearchObjectOptions>>({
+      method: 'users.Search',
+      params: {
+        search: picked,
+        page,
+        pageSize,
+      },
+    });
   }
 
   /**
@@ -1613,31 +1413,17 @@ export class MyShows implements IMyShows {
    * @param {number} [search.year] - year of registration.
    * @param {string} [search.gender] - gender, any of EGender enum.
    */
-  async usersCount<T>(search: SearchObjectOptions = {}): Promise<RpcResponse<T,
-    {
-      search: SearchObjectOptions;
-    }>> {
-    try {
-      const picked = GetSearchObjectProps(search);
+  async usersCount<T>(
+    search: SearchObjectOptions = {}
+  ): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>> {
+    const picked = getSearchObjectProps(search);
 
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'users.Count',
-        params: {
-          search: picked,
-        },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { search: picked, result };
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+    return await this.query<T, WithSearchParam<SearchObjectOptions>>({
+      method: 'users.Count',
+      params: {
+        search: picked,
+      },
+    });
   }
 
   /**
@@ -1646,33 +1432,16 @@ export class MyShows implements IMyShows {
    * returns total number of website's users (does not require authentication).
    * @param {string} [query] - query string.
    */
-  async usersFiltersCounters<T>(query: string): Promise<RpcResponse<T,
-    {
-      query: string;
-    }>> {
-    try {
-      const response = await this.axios.post('', {
-        ...this.defaultParams,
-        method: 'users.FiltersCounters',
-        params: {
-          search: {
-            query,
-          },
+  async usersFiltersCounters<T>(
+    query: string
+  ): Promise<RpcResponse<T, WithSearchParam<WithQueryParam>>> {
+    return await this.query<T, WithSearchParam<WithQueryParam>>({
+      method: 'users.FiltersCounters',
+      params: {
+        search: {
+          query,
         },
-      });
-
-      const { result } = response.data;
-
-      if (result) {
-        return { query, result } as RpcResponse<T,
-          {
-            query: string;
-          }>;
-      } else {
-        return { error: response.data.error };
-      }
-    } catch (error) {
-      return { error } as RpcError;
-    }
+      },
+    });
   }
 }

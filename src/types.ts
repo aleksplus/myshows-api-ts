@@ -1,7 +1,7 @@
 import { JsonRpcError, JsonRpcResult } from '@json-rpc-tools/types';
 import { AxiosInstance } from 'axios';
 
-export type Method =
+export type MethodV2 =
   | 'profile.Get'
   | 'profile.Feed'
   | 'profile.Friends'
@@ -66,6 +66,7 @@ export type Method =
   | 'users.Filters'
   | 'users.Follow'
   | 'users.UnFollow'
+  | 'users.FiltersCounters'
   | 'notes.Get'
   | 'notes.Count'
   | 'notes.Save'
@@ -106,6 +107,18 @@ export type Method =
   | 'recommendation.Get'
   | 'recommendation.Reject'
   | 'recommendation.UndoReject';
+
+export type MethodV3 =
+  | 'manage.SetMovieStatus'
+  | 'movies.GetCatalog'
+  | 'profile.UnwatchedMovies'
+  | 'profile.UnwatchedMoviesFilters'
+  | 'profile.UnwatchedMoviesCount'
+  | 'profile.WatchedMovies'
+  | 'profile.WatchedMoviesFilters'
+  | 'profile.WatchedMoviesCount';
+
+export type Method = MethodV2 | MethodV3;
 
 export enum EList {
   FAVORITES = 'favorites',
@@ -150,14 +163,76 @@ export enum EShowStatus {
   remove = 'remove',
 }
 
-type OmitRpc<T extends {
-  jsonrpc: any;
-  id: any;
-}> = Omit<T, 'jsonrpc' | 'id'>;
+export enum EMovieStatus {
+  finished = 'finished',
+  later = 'later',
+  remove = 'remove',
+}
 
-export type RpcError = OmitRpc<JsonRpcError>;
-export type RpcResult<T = any> = OmitRpc<JsonRpcResult<T>>;
-export type RpcResponse<T = any, P = {}> = (RpcResult<T> & P) | RpcError;
+export interface EpisodeList {
+  list: EList;
+}
+
+export interface EpisodeId {
+  id: number;
+}
+
+export interface EpisodeListWithId extends EpisodeList, EpisodeId {
+  list: EList.FAVORITES | EList.IGNORED;
+}
+
+export type ShowSearchParams = {
+  network: number;
+  genre: number;
+  country: string;
+  year: number;
+  watching: number;
+  category: string;
+  status: string;
+  sort: string;
+  query: string;
+};
+
+export type SearchParams = {
+  search: SearchObjectOptions;
+};
+
+export type Rating = 1 | 2 | 3 | 4 | 5;
+
+export interface WithId {
+  id: number;
+}
+
+export interface WithShowId {
+  showId: number;
+}
+
+export interface WithLoginParam {
+  login: string;
+}
+
+export interface WithRatingParam<R = Rating> extends WithId {
+  rating?: R;
+}
+
+export interface WithStatusParam<S> extends WithId {
+  status: S;
+}
+
+export interface WithQueryParam {
+  query: string;
+}
+
+export interface WithSearchParam<S> {
+  search: S;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface WithMovieStatusParam<S> {
+  movieId: number;
+  status: S;
+}
 
 export type Credentials = {
   client_id: string;
@@ -174,15 +249,56 @@ export type DefaultParams = {
   id: number;
 };
 
+export type SearchObjectOptions = Partial<{
+  query: string;
+  wasted: number;
+  year: number;
+  gender: EGender;
+}>;
+
+export type QueryParams = Record<string, unknown>;
+
+export interface QueryHandlerParams<P = QueryParams, M = Method> {
+  defaultParams: DefaultParams;
+  method: M;
+  params: P;
+  query: AxiosInstance;
+  url?: string;
+}
+
+type OmitRpc<T extends {
+  jsonrpc: any;
+  id: any;
+}> = Omit<T, 'jsonrpc' | 'id'>;
+
+export type OathResponseError = {
+  error: string;
+  error_description: string;
+};
+export type OathResponseDone = {
+  access_token: string;
+  expires_in: number;
+  token_type: 'Bearer';
+  scope: 'basic';
+  refresh_token: string;
+};
+export type OathResponse = OathResponseError | OathResponseDone;
+
+export type OathResponseV3Done = {
+  token: string;
+};
+export type OathResponseV3 = OathResponseError | OathResponseV3Done;
+
+export type RpcError = OmitRpc<JsonRpcError>;
+export type RpcResult<T = any> = OmitRpc<JsonRpcResult<T>>;
+export type RpcResponse<T = any, P = {}> = (RpcResult<T> & P) | RpcError;
+
 export interface IMyShowsList {
   listsShows<T>(list: EList): Promise<RpcResponse<T, { list: EList }>>;
 
   listsAddShow<T>(id: number): Promise<RpcResponse<T, { id: number }>>;
 
-  listsRemoveShow<T>(id: number): Promise<RpcResponse<T,
-    {
-      id: number;
-    }>>;
+  listsRemoveShow<T>(id: number): Promise<RpcResponse<T, WithId>>;
 
   listsEpisodes<T>(list: EList): Promise<RpcResponse<T, { list: EList }>>;
 
@@ -205,26 +321,21 @@ export interface IMyShowsList {
     }>>;
 }
 
-export type Rating = 1 | 2 | 3 | 4 | 5;
-
 export interface IMyShowsManage {
   manageSetShowStatus<T>(
     id: number,
     status: EShowStatus
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      status: EShowStatus;
-    }>>;
+  ): Promise<RpcResponse<T, WithStatusParam<EShowStatus>>>;
+
+  manageSetMovieStatus<T>(
+    id: number,
+    status: EMovieStatus
+  ): Promise<RpcResponse<T, WithMovieStatusParam<EMovieStatus>>>;
 
   manageRateShow<T, R = Rating>(
     id: number,
     rating: R
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating: R;
-    }>>;
+  ): Promise<RpcResponse<T, WithRatingParam<R>>>;
 
   manageCheckEpisode<T, R = Rating>(
     id: number,
@@ -237,28 +348,17 @@ export interface IMyShowsManage {
 
   manageUnCheckEpisode<T, R = Rating>(
     id: number
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-    }>>;
+  ): Promise<RpcResponse<T, WithId>>;
 
   manageRateEpisode<T, R = Rating>(
     id: number,
     rating: Rating
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating: R;
-    }>>;
+  ): Promise<RpcResponse<T, WithRatingParam<R>>>;
 
   manageRateEpisode<T, R = Rating>(
     id: number,
     rating: R
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating: R;
-    }>>;
+  ): Promise<RpcResponse<T, WithRatingParam<R>>>;
 
   manageRateEpisodesBulk<T, R = Rating>(
     id: number,
@@ -267,17 +367,15 @@ export interface IMyShowsManage {
     r3: R[],
     r4: R[],
     r5: R[]
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-    }>>;
+  ): Promise<RpcResponse<T, WithId>>;
 
   manageSyncEpisodes<T>(
     id: number,
     episodeIds: number[]
   ): Promise<RpcResponse<T,
     {
-      id: number;
+      showId: number;
+      episodeIds: number[];
     }>>;
 
   manageSyncEpisodesDelta<T>(
@@ -286,46 +384,34 @@ export interface IMyShowsManage {
     unCheckedIds: number[]
   ): Promise<RpcResponse<T,
     {
-      id: number;
+      showId: number;
+      checkedIds: number[];
+      unCheckedIds: number[];
     }>>;
 }
 
 export interface IMyShowsProfile {
-  profileGet<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>>;
+  profileGet<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFeed<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>>;
+  profileFeed<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFriends<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>>;
+  profileFriends<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFollowers<T>(login: string): Promise<RpcResponse<T,
-    {
-      login: string;
-    }>>;
+  profileFollowers<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
   profileFriendsFeed<T>(): Promise<RpcResponse<T>>;
 
-  profileShows<T>(login: string): Promise<RpcResponse<T[],
-    {
-      login: string;
-    }>>;
+  profileShows<T>(login: string): Promise<RpcResponse<T[], WithLoginParam>>;
 
-  profileEpisodes<T>(showId: number): Promise<RpcResponse<T,
-    {
-      showId: number;
-    }>>;
+  profileEpisodes<T>(showId: number): Promise<RpcResponse<T, WithShowId>>;
 
   profileAchievements<T>(): Promise<RpcResponse<T>>;
 
   profileNewComments<T>(): Promise<RpcResponse<T>>;
+}
+
+export interface IMyShowsMovies {
+  moviesSearch<T>(query: string): Promise<RpcResponse<T>>;
 }
 
 export interface IMyShowsShows {
@@ -381,10 +467,9 @@ export interface IMyShowsUsers {
 
   usersCount<T>(search: Record<string, unknown>): Promise<RpcResponse<T>>;
 
-  usersFiltersCounters<T>(query: string): Promise<RpcResponse<T,
-    {
-      query: string;
-    }>>;
+  usersFiltersCounters<T>(
+    query: string
+  ): Promise<RpcResponse<T, WithSearchParam<WithQueryParam>>>;
 }
 
 export interface IMyShows
@@ -392,15 +477,17 @@ export interface IMyShows
     IMyShowsProfile,
     IMyShowsList,
     IMyShowsManage,
-    IMyShowsShows {
-  credentials: Credentials;
+    IMyShowsShows,
+    IMyShowsMovies {
   axios: AxiosInstance;
   defaultParams: DefaultParams;
 
   login(): Promise<RpcError | void>;
 
+  loginV3(): Promise<RpcError | void>;
+
   generic<P, T = JsonRpcResult<P>>(
     method: Method,
     params: Record<string, unknown>
-  ): Promise<T | RpcError>
+  ): Promise<T | RpcError>;
 }

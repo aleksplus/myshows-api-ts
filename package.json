@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "@json-rpc-tools/types": "^1.7.6",
-    "axios": "^0.21.1"
+    "axios": "0.27.2"
   },
   "devDependencies": {
     "prettier": "^2.3.2",

@@ -1203,19 +1203,6 @@ export class MyShows implements IMyShows {
   }
 
   /**
-   * Returns matched movies (does not require authentication).
-   * @param {string} query - Query string.
-   */
-  async moviesSearch<T>(query: string) {
-    return await this.queryV3<T, WithSearchParam<WithQueryParam>>({
-      method: 'movies.GetCatalog',
-      params: {
-        search: { query },
-      },
-    });
-  }
-
-  /**
    * Returns matched shows (does not require authentication).
    * @param {string} file - Query string.
    */
@@ -1355,6 +1342,38 @@ export class MyShows implements IMyShows {
         commentId: id,
         text,
         parentCommentId: parentId,
+      },
+    });
+  }
+
+  /**
+   * Returns matched movies (does not require authentication).
+   * @param {string} query - Query string.
+   */
+  async moviesSearch<T>(query: string) {
+    return await this.queryV3<T, WithSearchParam<WithQueryParam>>({
+      method: 'movies.GetCatalog',
+      params: {
+        search: { query },
+      },
+    });
+  }
+
+  /**
+   * Returns a movie by id
+   * @param {int} id - Show id.
+   */
+  async moviesGetById<T>(id: number): Promise<RpcResponse<T,
+    {
+      movieId: number;
+    }>> {
+    return await this.query<T,
+      {
+        movieId: number;
+      }>({
+      method: 'movies.GetById',
+      params: {
+        movieId: id,
       },
     });
   }

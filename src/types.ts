@@ -111,6 +111,7 @@ export type MethodV2 =
 export type MethodV3 =
   | 'manage.SetMovieStatus'
   | 'movies.GetCatalog'
+  | 'movies.GetById'
   | 'profile.UnwatchedMovies'
   | 'profile.UnwatchedMoviesFilters'
   | 'profile.UnwatchedMoviesCount'
@@ -412,6 +413,8 @@ export interface IMyShowsProfile {
 
 export interface IMyShowsMovies {
   moviesSearch<T>(query: string): Promise<RpcResponse<T>>;
+
+  moviesGetById<T>(id: number): Promise<RpcResponse<T>>;
 }
 
 export interface IMyShowsShows {

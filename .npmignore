@@ -4,3 +4,5 @@
 /.idea/
 src/
 tsconfig.json
+.prettierrc
+.editorconfig

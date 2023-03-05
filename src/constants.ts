@@ -1,4 +1,4 @@
-import { DefaultParams } from './types';
+import { DefaultParams } from './types/request';
 
 export const AUTH_URL = 'https://myshows.me/oauth/token';
 export const AUTH_URL_V3 = 'https://myshows.me/api/session';

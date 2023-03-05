@@ -1,5 +1,16 @@
-import { JsonRpcError, JsonRpcResult } from '@json-rpc-tools/types';
+import { JSONRPCResponse } from 'json-rpc-2.0';
 import { AxiosInstance } from 'axios';
+
+import { MovieModel } from './models';
+import {
+  EGender,
+  EGenderVote,
+  EList,
+  EMovieStatus,
+  EShowSources,
+  EShowStatus,
+} from '../enums';
+import { RpcError, RpcResponse } from './rpcUtils';
 
 export type MethodV2 =
   | 'profile.Get'
@@ -121,55 +132,6 @@ export type MethodV3 =
 
 export type Method = MethodV2 | MethodV3;
 
-export enum EList {
-  FAVORITES = 'favorites',
-  IGNORED = 'ignored',
-  UNWATCHED = 'unwatched',
-  NEXT = 'next',
-}
-
-export enum EGender {
-  MALE = 'm',
-  FEMALE = 'f',
-  UNKNOWN = 'x',
-}
-
-export enum EGenderVote {
-  MALE = 'm',
-  FEMALE = 'f',
-  ALL = 'all',
-}
-
-export enum ESpentTime {
-  NONE = 1,
-  HOUR = 2,
-  DAY = 3,
-  WEEK = 4,
-  MONTH = 5,
-  YEAR = 6,
-}
-
-export enum EShowSources {
-  TVRAGE = 'tvrage',
-  TVMAZE = 'tvmaze',
-  THETVDB = 'thetvdb',
-  IMDB = 'imdb',
-  KINOPOISK = 'kinopoisk',
-}
-
-export enum EShowStatus {
-  watching = 'watching',
-  later = 'later',
-  cancelled = 'cancelled',
-  remove = 'remove',
-}
-
-export enum EMovieStatus {
-  finished = 'finished',
-  later = 'later',
-  remove = 'remove',
-}
-
 export interface EpisodeList {
   list: EList;
 }
@@ -267,33 +229,6 @@ export interface QueryHandlerParams<P = QueryParams, M = Method> {
   url?: string;
 }
 
-type OmitRpc<T extends {
-  jsonrpc: any;
-  id: any;
-}> = Omit<T, 'jsonrpc' | 'id'>;
-
-export type OathResponseError = {
-  error: string;
-  error_description: string;
-};
-export type OathResponseDone = {
-  access_token: string;
-  expires_in: number;
-  token_type: 'Bearer';
-  scope: 'basic';
-  refresh_token: string;
-};
-export type OathResponse = OathResponseError | OathResponseDone;
-
-export type OathResponseV3Done = {
-  token: string;
-};
-export type OathResponseV3 = OathResponseError | OathResponseV3Done;
-
-export type RpcError = OmitRpc<JsonRpcError>;
-export type RpcResult<T = any> = OmitRpc<JsonRpcResult<T>>;
-export type RpcResponse<T = any, P = {}> = (RpcResult<T> & P) | RpcError;
-
 export interface IMyShowsList {
   listsShows<T>(list: EList): Promise<RpcResponse<T, { list: EList }>>;
 
@@ -305,60 +240,74 @@ export interface IMyShowsList {
 
   listsAddEpisode<T>(
     id: number,
-    list: EList
-  ): Promise<RpcResponse<T,
-    {
-      list: EList.FAVORITES | EList.IGNORED;
-      id: number;
-    }>>;
+    list: EList,
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        list: EList.FAVORITES | EList.IGNORED;
+        id: number;
+      }
+    >
+  >;
 
   listsRemoveEpisode<T>(
     id: number,
-    list: EList.FAVORITES | EList.IGNORED
-  ): Promise<RpcResponse<T,
-    {
-      list: EList.FAVORITES | EList.IGNORED;
-      id: number;
-    }>>;
+    list: EList.FAVORITES | EList.IGNORED,
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        list: EList.FAVORITES | EList.IGNORED;
+        id: number;
+      }
+    >
+  >;
 }
 
-export interface IMyShowsManage {
+export interface IMyShowsManageV3 {
   manageSetShowStatus<T>(
     id: number,
-    status: EShowStatus
+    status: EShowStatus,
   ): Promise<RpcResponse<T, WithStatusParam<EShowStatus>>>;
 
   manageSetMovieStatus<T>(
     id: number,
-    status: EMovieStatus
+    status: EMovieStatus,
   ): Promise<RpcResponse<T, WithMovieStatusParam<EMovieStatus>>>;
+}
 
+export interface IMyShowsManage extends IMyShowsManageV3 {
   manageRateShow<T, R = Rating>(
     id: number,
-    rating: R
+    rating: R,
   ): Promise<RpcResponse<T, WithRatingParam<R>>>;
 
   manageCheckEpisode<T, R = Rating>(
     id: number,
-    rating?: R
-  ): Promise<RpcResponse<T,
-    {
-      id: number;
-      rating?: R;
-    }>>;
+    rating?: R,
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        id: number;
+        rating?: R;
+      }
+    >
+  >;
 
   manageUnCheckEpisode<T, R = Rating>(
-    id: number
+    id: number,
   ): Promise<RpcResponse<T, WithId>>;
 
   manageRateEpisode<T, R = Rating>(
     id: number,
-    rating: Rating
+    rating: Rating,
   ): Promise<RpcResponse<T, WithRatingParam<R>>>;
 
   manageRateEpisode<T, R = Rating>(
     id: number,
-    rating: R
+    rating: R,
   ): Promise<RpcResponse<T, WithRatingParam<R>>>;
 
   manageRateEpisodesBulk<T, R = Rating>(
@@ -367,28 +316,36 @@ export interface IMyShowsManage {
     r2: R[],
     r3: R[],
     r4: R[],
-    r5: R[]
+    r5: R[],
   ): Promise<RpcResponse<T, WithId>>;
 
   manageSyncEpisodes<T>(
     id: number,
-    episodeIds: number[]
-  ): Promise<RpcResponse<T,
-    {
-      showId: number;
-      episodeIds: number[];
-    }>>;
+    episodeIds: number[],
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        showId: number;
+        episodeIds: number[];
+      }
+    >
+  >;
 
   manageSyncEpisodesDelta<T>(
     id: number,
     checkedIds: number[],
-    unCheckedIds: number[]
-  ): Promise<RpcResponse<T,
-    {
-      showId: number;
-      checkedIds: number[];
-      unCheckedIds: number[];
-    }>>;
+    unCheckedIds: number[],
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        showId: number;
+        checkedIds: number[];
+        unCheckedIds: number[];
+      }
+    >
+  >;
 }
 
 export interface IMyShowsProfile {
@@ -414,7 +371,7 @@ export interface IMyShowsProfile {
 export interface IMyShowsMovies {
   moviesSearch<T>(query: string): Promise<RpcResponse<T>>;
 
-  moviesGetById<T>(id: number): Promise<RpcResponse<T>>;
+  moviesGetById(id: number): Promise<RpcResponse<MovieModel>>;
 }
 
 export interface IMyShowsShows {
@@ -422,7 +379,7 @@ export interface IMyShowsShows {
 
   showsGetByExternalId<T>(
     id: number,
-    source: EShowSources
+    source: EShowSources,
   ): Promise<RpcResponse<T>>;
 
   showsSearch<T>(query: string): Promise<RpcResponse<T>>;
@@ -441,23 +398,23 @@ export interface IMyShowsShows {
 
   showsTrackEpisodeComments<T>(
     id: number,
-    isTracked: boolean
+    isTracked: boolean,
   ): Promise<RpcResponse<T>>;
 
   showsVoteEpisodeComment<T>(
     id: number,
-    isPositive: boolean
+    isPositive: boolean,
   ): Promise<RpcResponse<T>>;
 
   showsPostEpisodeComment<T>(
     id: number,
     text: string,
-    parentId: number
+    parentId: number,
   ): Promise<RpcResponse<T>>;
 
   showsTranslateEpisodeComment<T>(
     id: number,
-    language: string
+    language: string,
   ): Promise<RpcResponse<T>>;
 }
 
@@ -465,14 +422,27 @@ export interface IMyShowsUsers {
   usersSearch<T>(
     search: Record<string, unknown>,
     page: number,
-    pageSize: number
+    pageSize: number,
   ): Promise<RpcResponse<T>>;
 
   usersCount<T>(search: Record<string, unknown>): Promise<RpcResponse<T>>;
 
   usersFiltersCounters<T>(
-    query: string
+    query: string,
   ): Promise<RpcResponse<T, WithSearchParam<WithQueryParam>>>;
+}
+
+export interface IMyShowsBase {
+  defaultParams: DefaultParams;
+
+  login(): Promise<RpcError | void>;
+
+  loginV3(): Promise<RpcError | void>;
+
+  generic<P, T = JSONRPCResponse>(
+    method: Method,
+    params: Record<string, unknown>,
+  ): Promise<T | RpcError>;
 }
 
 export interface IMyShows
@@ -481,16 +451,5 @@ export interface IMyShows
     IMyShowsList,
     IMyShowsManage,
     IMyShowsShows,
-    IMyShowsMovies {
-  axios: AxiosInstance;
-  defaultParams: DefaultParams;
-
-  login(): Promise<RpcError | void>;
-
-  loginV3(): Promise<RpcError | void>;
-
-  generic<P, T = JsonRpcResult<P>>(
-    method: Method,
-    params: Record<string, unknown>
-  ): Promise<T | RpcError>;
-}
+    IMyShowsMovies,
+    IMyShowsBase {}

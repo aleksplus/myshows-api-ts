@@ -72,6 +72,7 @@ export type MethodV2 =
   | 'manage.SyncEpisodes'
   | 'manage.SyncEpisodesDelta'
   | 'manage.MoveEpisodeDate'
+  | 'manage.ReWatchShow'
   | 'users.Search'
   | 'users.Count'
   | 'users.Filters'
@@ -176,6 +177,10 @@ export interface WithLoginParam {
 
 export interface WithRatingParam<R = Rating> extends WithId {
   rating?: R;
+}
+
+export interface WithCountParam extends WithId {
+  count: number;
 }
 
 export interface WithStatusParam<S> extends WithId {
@@ -346,6 +351,8 @@ export interface IMyShowsManage extends IMyShowsManageV3 {
       }
     >
   >;
+
+  manageReWatchShow(id: number, count: number): Promise<RpcResponse>;
 }
 
 export interface IMyShowsProfile {

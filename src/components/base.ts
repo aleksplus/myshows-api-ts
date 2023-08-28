@@ -4,6 +4,7 @@ import {
   EpisodeListWithId,
   IMyShows,
   SearchObjectOptions,
+  WithCountParam,
   WithId,
   WithLoginParam,
   WithMovieStatusParam,
@@ -311,6 +312,24 @@ export class MyShows extends MyShowsCore implements IMyShows {
         showId: id,
         checkedIds,
         unCheckedIds,
+      },
+    });
+  }
+
+  /**
+   * Mark as watched several times (requires authentication).
+   * @param {int} id - Episode id.
+   * @param {int} count
+   */
+  async manageReWatchShow<T>(
+    id: number,
+    count: number,
+  ): Promise<RpcResponse<T, WithCountParam>> {
+    return await this.query<T, WithCountParam>({
+      method: 'manage.ReWatchShow',
+      params: {
+        id,
+        count,
       },
     });
   }

@@ -3,6 +3,7 @@
 .vscode
 /.idea/
 src/
+dist/example/
 tsconfig.json
 .prettierrc
 .editorconfig

@@ -1,4 +1,21 @@
 import {
+  EGenderVote,
+  EList,
+  EMovieStatus,
+  EShowSources,
+  EShowStatus,
+} from '../enums';
+import {
+  Feed,
+  ShowRank,
+  ShowRecommendation,
+  MovieModel,
+  MovieSearch,
+  ProfileGetResponse,
+  ShowsModel,
+  EpisodeDetail
+} from '../types/models';
+import {
   EpisodeId,
   EpisodeList,
   EpisodeListWithId,
@@ -16,14 +33,6 @@ import {
   WithStatusParam,
 } from '../types/request';
 import { RpcResponse } from '../types/rpcUtils';
-import { MovieModel, MovieSearch, ShowsModel } from '../types/models';
-import {
-  EGenderVote,
-  EList,
-  EMovieStatus,
-  EShowSources,
-  EShowStatus,
-} from '../enums';
 import { getSearchObjectProps } from '../utils';
 import { MyShowsCore } from './core';
 
@@ -357,7 +366,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user profile (requires authentication only if login param omited).
    * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileGet<T>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
+  async profileGet<T = ProfileGetResponse>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
     return await this.query<T, WithLoginParam>({
       method: 'profile.Get',
       params: {
@@ -370,7 +379,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user public feed (requires authentication only if login param omited).
    * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileFeed<T>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
+  async profileFeed<T = Feed[]>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
     return await this.query<T, WithLoginParam>({
       method: 'profile.Feed',
       params: {
@@ -877,8 +886,8 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns an episode by id (does not require authentication).
    * @param {int} id - Episode id.
    */
-  async showsEpisode<T>(id: number): Promise<RpcResponse<T>> {
-    return await this.query<T, WithId>({
+  async showsEpisode<T = EpisodeDetail>(id: number): Promise<RpcResponse<T, { id: number }>> {
+    return await this.query<T, { id: number }>({
       method: 'shows.Episode',
       params: {
         id,
@@ -901,11 +910,11 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {int} [mode=MyShows.EGenderVote.ALL] - Gender of votes, any of MyShows.EGenderVote enum.
    * @param {int} [count=500] - Number of shows (max 500).
    */
-  async showsTop<T>(
+  async showsTop<T = ShowRank[]>(
     mode = EGenderVote.ALL,
     count = 500,
-  ): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+  ): Promise<RpcResponse<T, { mode: EGenderVote; count: number }>> {
+    return await this.query<T, { mode: EGenderVote; count: number }>({
       method: 'shows.Top',
       params: {
         mode,
@@ -918,8 +927,8 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Marks comments as viewed for an episode (requires authentication).
    * @param {int} id - Episode id.
    */
-  async showsViewEpisodeComments<T>(id: number): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+  async showsViewEpisodeComments<T = boolean>(id: number): Promise<RpcResponse<T, { episodeId: number }>> {
+    return await this.query<T, { episodeId: number }>({
       method: 'shows.ViewEpisodeComments',
       params: {
         episodeId: id,
@@ -932,11 +941,11 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {int} id - Episode id.
    * @param {boolean} isTracked - Should we track new comments for this episode or not.
    */
-  async showsTrackEpisodeComments<T>(
+  async showsTrackEpisodeComments<T = boolean>(
     id: number,
     isTracked: boolean,
-  ): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+  ): Promise<RpcResponse<T, { episodeId: number; isTracked: boolean }>> {
+    return await this.query<T, { episodeId: number; isTracked: boolean }>({
       method: 'shows.TrackEpisodeComments',
       params: {
         episodeId: id,
@@ -950,11 +959,11 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {int} id - Comment id.
    * @param {boolean} isPositive - true/false for positive/negative vote.
    */
-  async showsVoteEpisodeComment<T>(
+  async showsVoteEpisodeComment<T = number>(
     id: number,
     isPositive: boolean,
-  ): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+  ): Promise<RpcResponse<T, { commentId: number; isPositive: boolean }>> {
+    return await this.query<T, { commentId: number; isPositive: boolean }>({
       method: 'shows.VoteEpisodeComment',
       params: {
         commentId: id,
@@ -1101,11 +1110,11 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {int} id - Comment id.
    * @param {boolean} [language=user's default language] - Target language.
    */
-  async showsTranslateEpisodeComment<T>(
+  async showsTranslateEpisodeComment<T = string>(
     id: number,
     language: string,
-  ): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+  ): Promise<RpcResponse<T, { commentId: number; language: string }>> {
+    return await this.query<T, { commentId: number; language: string }>({
       method: 'shows.TranslateEpisodeComment',
       params: {
         commentId: id,
@@ -1865,7 +1874,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Get recommendations (requires authentication).
    * @param {int} [count=50] - Number of recommendations.
    */
-  async recommendationGet<T>(
+  async recommendationGet<T = ShowRecommendation[]>(
     count = 50,
   ): Promise<RpcResponse<T, { count: number }>> {
     return await this.query<T, { count: number }>({

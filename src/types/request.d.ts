@@ -1,7 +1,46 @@
 import { JSONRPCResponse } from 'json-rpc-2.0';
 import { AxiosInstance } from 'axios';
 
-import { MovieModel } from './models';
+import { 
+  MovieModel,
+  ProfileGetResponse,
+  Feed,
+  User,
+  ProfileFriendshipResponse,
+  UserShowSummary,
+  UserShowStatus,
+  UserEpisodeSummary,
+  ProfileShowResponse,
+  ProfileEpisodeResponse,
+  ProfileAchievementResponse,
+  NewComment,
+  NewNewsComment,
+  ProfileCountersResponse,
+  UserProfileSetting,
+  UserComment,
+  NewsComment,
+  ShowSummary,
+  ShowFilter,
+  ShowDetail,
+  Show,
+  EpisodeDetail,
+  Genre,
+  ShowRank,
+  EpisodeCommentsResponse,
+  PostEpisodeCommentResponse,
+  EpisodeListItem,
+  NewsDetail,
+  NewsCommentsResponse,
+  PostNewsCommentResponse,
+  SaveNoteResponse,
+  AuthRegisterResponse,
+  AuthLoginByAppleIDResponse,
+  SiteMetaResponse,
+  SiteCountersResponse,
+  PaymentType,
+  Product,
+  ShowRecommendation
+} from './models';
 import {
   EGender,
   EGenderVote,
@@ -356,23 +395,55 @@ export interface IMyShowsManage extends IMyShowsManageV3 {
 }
 
 export interface IMyShowsProfile {
-  profileGet<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+  profileGet<T = ProfileGetResponse>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFeed<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+  profileFeed<T = Feed[]>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFriends<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+  profileFriends<T = User[]>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFollowers<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+  profileFollowers<T = User[]>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileFriendsFeed<T>(): Promise<RpcResponse<T>>;
+  profileFriendship<T = ProfileFriendshipResponse>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileShows<T>(login: string): Promise<RpcResponse<T[], WithLoginParam>>;
+  profileFriendsFeed<T = Feed[]>(): Promise<RpcResponse<T>>;
 
-  profileEpisodes<T>(showId: number): Promise<RpcResponse<T, WithShowId>>;
+  profileShows<T = UserShowSummary[]>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
 
-  profileAchievements<T>(): Promise<RpcResponse<T>>;
+  profileShowStatuses<T = UserShowStatus[]>(showIds?: number[]): Promise<RpcResponse<T, { showIds?: number[] }>>;
 
-  profileNewComments<T>(): Promise<RpcResponse<T>>;
+  profileShow<T = ProfileShowResponse>(showId: number): Promise<RpcResponse<T, WithShowId>>;
+
+  profileEpisodes<T = UserEpisodeSummary[]>(showId: number): Promise<RpcResponse<T, WithShowId>>;
+
+  profileEpisode<T = ProfileEpisodeResponse>(episodeId: number): Promise<RpcResponse<T, { episodeId: number }>>;
+
+  profileAchievements<T = AchievementSummary[]>(): Promise<RpcResponse<T>>;
+
+  profileAchievement<T = ProfileAchievementResponse>(alias: string, key: string): Promise<RpcResponse<T, { alias: string; key: string }>>;
+
+  profileNewComments<T = NewComment[]>(): Promise<RpcResponse<T>>;
+
+  profileNewNewsComments<T = NewNewsComment[]>(): Promise<RpcResponse<T>>;
+
+  profileNewCommentReplies<T = NewComment[]>(): Promise<RpcResponse<T>>;
+
+  profileNewNewsCommentReplies<T = NewNewsComment[]>(): Promise<RpcResponse<T>>;
+
+  profileCounters<T = ProfileCountersResponse>(): Promise<RpcResponse<T>>;
+
+  profileSettings<T = UserProfileSetting[]>(): Promise<RpcResponse<T>>;
+
+  profileSaveSettings<T = boolean>(settings: Array<{ alias: string; value: string }>): Promise<RpcResponse<T, { settings: Array<{ alias: string; value: string }> }>>;
+
+  profileEpisodeCommentsCount<T = number>(login?: string): Promise<RpcResponse<T, {}> | RpcResponse<T, WithLoginParam>>;
+
+  profileEpisodeComments<T = UserComment[]>(login: string, page?: number, pageSize?: number, sort?: string): Promise<RpcResponse<T, WithLoginParam & { page: number; pageSize: number; sort: string }>>;
+
+  profileNewsCommentsCount<T = number>(login?: string): Promise<RpcResponse<T, {}> | RpcResponse<T, WithLoginParam>>;
+
+  profileNewsComments<T = NewsComment[]>(login: string, page?: number, pageSize?: number, sort?: string): Promise<RpcResponse<T, WithLoginParam & { page: number; pageSize: number; sort: string }>>;
+
+  profileMarkCommentsAsViewed<T = boolean>(): Promise<RpcResponse<T>>;
 }
 
 export interface IMyShowsMovies {
@@ -382,61 +453,243 @@ export interface IMyShowsMovies {
 }
 
 export interface IMyShowsShows {
-  showsGetById<T>(id: number, withEpisodes: boolean): Promise<RpcResponse<T>>;
+  showsGet<T = ShowSummary[]>(search: Partial<ShowSearchParams>, page?: number, pageSize?: number): Promise<RpcResponse<T, { search: Partial<ShowSearchParams>; page: number; pageSize: number }>>;
 
-  showsGetByExternalId<T>(
+  showsCount<T = number>(search: Partial<ShowSearchParams>): Promise<RpcResponse<T, { search: Partial<ShowSearchParams> }>>;
+
+  showsFilters<T = ShowFilter[]>(search: Partial<ShowSearchParams>): Promise<RpcResponse<T, { search: Partial<ShowSearchParams> }>>;
+
+  showsGetById<T = ShowsGetByIdResponse>(id: number, withEpisodes?: boolean): Promise<RpcResponse<T, { showId: number; withEpisodes: boolean }>>;
+
+  showsGetByExternalId<T = ShowsGetByIdResponse>(
     id: number,
     source: EShowSources,
-  ): Promise<RpcResponse<T>>;
+  ): Promise<RpcResponse<T, { id: number; source: EShowSources }>>;
 
-  showsSearch<T>(query: string): Promise<RpcResponse<T>>;
+  showsSearch<T = Show[]>(query: string): Promise<RpcResponse<T, WithQueryParam>>;
 
-  showsSearchByFile<T>(file: string): Promise<RpcResponse<T>>;
+  showsSearchByFile<T = string[]>(file: string): Promise<RpcResponse<T, { file: string }>>;
 
-  showsIds<T>(fromId: number, count: number): Promise<RpcResponse<T>>;
+  showsIds<T = number[]>(fromId: number, count: number): Promise<RpcResponse<T, { fromId: number; count: number }>>;
 
-  showsEpisode<T>(id: number): Promise<RpcResponse<T>>;
+  showsEpisode<T = EpisodeDetail>(id: number): Promise<RpcResponse<T, { id: number }>>;
 
-  showsGenres<T>(): Promise<RpcResponse<T>>;
+  showsGenres<T = Genre[]>(): Promise<RpcResponse<T>>;
 
-  showsTop<T>(mode: EGenderVote, count: number): Promise<RpcResponse<T>>;
+  showsTop<T = ShowRank[]>(mode?: EGenderVote, count?: number): Promise<RpcResponse<T, { mode: EGenderVote; count: number }>>;
 
-  showsViewEpisodeComments<T>(id: number): Promise<RpcResponse<T>>;
+  showsViewEpisodeComments<T = boolean>(id: number): Promise<RpcResponse<T, { episodeId: number }>>;
 
-  showsTrackEpisodeComments<T>(
+  showsTrackEpisodeComments<T = boolean>(
     id: number,
     isTracked: boolean,
-  ): Promise<RpcResponse<T>>;
+  ): Promise<RpcResponse<T, { episodeId: number; isTracked: boolean }>>;
 
-  showsVoteEpisodeComment<T>(
+  showsVoteEpisodeComment<T = number>(
     id: number,
     isPositive: boolean,
-  ): Promise<RpcResponse<T>>;
+  ): Promise<RpcResponse<T, { commentId: number; isPositive: boolean }>>;
 
-  showsPostEpisodeComment<T>(
+  showsEpisodeComments<T = ShowsEpisodeCommentsResponse>(id: number): Promise<RpcResponse<T, { episodeId: number }>>;
+
+  showsPostEpisodeComment<T = ShowsPostEpisodeCommentResponse>(
     id: number,
     text: string,
-    parentId: number,
+    imageOrParent?: string | number,
+    parentId?: number,
   ): Promise<RpcResponse<T>>;
 
-  showsTranslateEpisodeComment<T>(
+  showsUpdateEpisodeComment<T = boolean>(
+    id: number,
+    text: string,
+    image?: string,
+    deleteImage?: boolean,
+  ): Promise<RpcResponse<T, { commentId: number; text: string; image?: string; deleteImage: boolean }>>;
+
+  showsDeleteEpisodeComment<T = boolean>(
+    id: number,
+  ): Promise<RpcResponse<T, { commentId: number }>>;
+
+  showsTranslateEpisodeComment<T = string>(
     id: number,
     language: string,
-  ): Promise<RpcResponse<T>>;
+  ): Promise<RpcResponse<T, { commentId: number; language: string }>>;
 }
 
 export interface IMyShowsUsers {
-  usersSearch<T>(
-    search: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-  ): Promise<RpcResponse<T>>;
+  usersSearch<T = User[]>(
+    search: SearchObjectOptions,
+    page?: number,
+    pageSize?: number,
+  ): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>>;
 
-  usersCount<T>(search: Record<string, unknown>): Promise<RpcResponse<T>>;
+  usersCount<T = number>(search: SearchObjectOptions): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>>;
 
-  usersFiltersCounters<T>(
+  usersFiltersCounters<T = ShowFilter[]>(
     query: string,
   ): Promise<RpcResponse<T, WithSearchParam<WithQueryParam>>>;
+
+  usersFollow<T = boolean>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+
+  usersUnFollow<T = boolean>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+
+  usersFilters<T = ShowFilter[]>(search: SearchObjectOptions): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>>;
+}
+
+export interface IMyShowsNews {
+  newsGet<T = NewsSummary[]>(
+    search: Partial<{
+      showId: number;
+      episodeId: number;
+      category: string;
+      tag: string;
+      isTrailer: boolean;
+      similarNewsId: number;
+      forCurrentUser: boolean;
+    }>,
+    page?: number,
+    pageSize?: number,
+  ): Promise<RpcResponse<T, { search: Partial<typeof search>; page: number; pageSize: number }>>;
+
+  newsCount<T = number>(
+    search: Partial<{
+      showId: number;
+      episodeId: number;
+      category: string;
+      tag: string;
+      isTrailer: boolean;
+      similarNewsId: number;
+      forCurrentUser: boolean;
+    }>,
+  ): Promise<RpcResponse<T, { search: Partial<typeof search> }>>;
+
+  newsGetById<T = NewsGetByIdResponse>(newsId: number): Promise<RpcResponse<T, { newsId: number }>>;
+
+  newsCategories<T = NewsCategory[]>(): Promise<RpcResponse<T>>;
+
+  newsComments<T = NewsCommentsResponse>(newsId: number): Promise<RpcResponse<T, { newsId: number }>>;
+
+  newsViewComments<T = boolean>(newsId: number): Promise<RpcResponse<T, { newsId: number }>>;
+
+  newsTrackComments<T = boolean>(newsId: number, isTracked: boolean): Promise<RpcResponse<T, { newsId: number; isTracked: boolean }>>;
+
+  newsVoteComment<T = number>(commentId: number, isPositive: boolean): Promise<RpcResponse<T, { commentId: number; isPositive: boolean }>>;
+
+  newsPostComment<T = NewsPostCommentResponse>(
+    newsId: number,
+    text: string,
+    image?: string,
+    parentCommentId?: number,
+  ): Promise<RpcResponse<T, { newsId: number; text: string; image?: string; parentCommentId?: number }>>;
+
+  newsUpdateComment<T = boolean>(
+    commentId: number,
+    text: string,
+    image?: string,
+    deleteImage?: boolean,
+  ): Promise<RpcResponse<T, { commentId: number; text: string; image?: string; deleteImage: boolean }>>;
+
+  newsDeleteComment<T = boolean>(commentId: number): Promise<RpcResponse<T, { commentId: number }>>;
+
+  newsTranslateComment<T = string>(commentId: number, language: string): Promise<RpcResponse<T, { commentId: number; language: string }>>;
+}
+
+export interface IMyShowsNotes {
+  notesGet<T = NoteSummary[]>(
+    search: { isShow: boolean; isEpisode: boolean },
+    page?: number,
+    pageSize?: number,
+  ): Promise<RpcResponse<T, { search: { isShow: boolean; isEpisode: boolean }; page: number; pageSize: number }>>;
+
+  notesCount<T = number>(
+    search: { isShow: boolean; isEpisode: boolean },
+  ): Promise<RpcResponse<T, { search: { isShow: boolean; isEpisode: boolean } }>>;
+
+  notesSave<T = NotesSaveResponse>(
+    showId: number,
+    text: string,
+    episodeId?: number,
+  ): Promise<RpcResponse<T, { showId: number; text: string; episodeId?: number }>>;
+
+  notesDelete<T = boolean>(episodeId: number): Promise<RpcResponse<T, EpisodeId>>;
+
+  notesRestore<T = boolean>(episodeId: number): Promise<RpcResponse<T, EpisodeId>>;
+}
+
+export interface IMyShowsAuth {
+  authRegister<T = AuthRegisterResponse>(
+    clientId: string,
+    sig: string,
+    login: string,
+    email: string,
+    password: string,
+  ): Promise<RpcResponse<T, { clientId: string; sig: string; login: string; email: string; password: string }>>;
+
+  authLoginByAppleID<T = AuthLoginByAppleIDResponse>(
+    clientId: string,
+    sig: string,
+    identityToken: string,
+  ): Promise<RpcResponse<T, { clientId: string; sig: string; identityToken: string }>>;
+
+  authUnlinkSocialProfile<T = boolean>(provider: EShowSources): Promise<RpcResponse<T, { provider: EShowSources }>>;
+
+  authLinkSocialProfile<T = string>(
+    provider: EShowSources,
+    returnUrl: string,
+  ): Promise<RpcResponse<T, { provider: EShowSources; returnUrl: string }>>;
+}
+
+export interface IMyShowsIAP {
+  iapValidateReceiptIOS<T = boolean>(
+    receiptData: string,
+    transactionId: string,
+    isSandbox: boolean,
+  ): Promise<RpcResponse<T, { receiptData: string; transactionId: string; isSandbox: boolean }>>;
+
+  iapValidateReceiptAndroid<T = boolean>(payload: string): Promise<RpcResponse<T, { payload: string }>>;
+}
+
+export interface IMyShowsSite {
+  siteMeta<T = SiteMetaResponse>(url: string): Promise<RpcResponse<T, { url: string }>>;
+
+  siteCounters<T = SiteCountersResponse>(): Promise<RpcResponse<T>>;
+
+  siteShowsPopular<T = ShowSummary[]>(count?: number): Promise<RpcResponse<T, { count: number }>>;
+
+  siteShowsOnline<T = ShowSummary[]>(count?: number): Promise<RpcResponse<T, { count: number }>>;
+
+  siteShowsOnlinePromo<T = ShowSummary[]>(count?: number): Promise<RpcResponse<T, { count: number }>>;
+
+  siteTopEpisodeComments<T = NewComment[]>(episodeCount?: number, days?: number): Promise<RpcResponse<T, { episodeCount: number; days: number }>>;
+
+  sitePaymentTypes<T = PaymentType[]>(): Promise<RpcResponse<T>>;
+
+  siteProducts<T = Product[]>(): Promise<RpcResponse<T>>;
+
+  siteCreateProTransaction<T = string>(
+    product: string,
+    paymentType: string,
+  ): Promise<RpcResponse<T, { product: string; paymentType: string }>>;
+}
+
+export interface IMyShowsPush {
+  pushRegisterTokenIOS<T = boolean>(token: string, idfa: string): Promise<RpcResponse<T, { token: string; idfa: string }>>;
+
+  pushRegisterTokenAndroid<T = boolean>(token: string, gaid: string): Promise<RpcResponse<T, { token: string; gaid: string }>>;
+
+  pushRegisterTokenWeb<T = boolean>(token: string): Promise<RpcResponse<T, { token: string }>>;
+
+  pushSendTestAndroid<T = boolean>(pushType: string): Promise<RpcResponse<T, { pushType: string }>>;
+
+  pushSendTestIOS<T = boolean>(pushType: string): Promise<RpcResponse<T, { pushType: string }>>;
+}
+
+export interface IMyShowsRecommendation {
+  recommendationGet<T = ShowRecommendation[]>(count?: number): Promise<RpcResponse<T, { count: number }>>;
+
+  recommendationReject<T = boolean>(id: number): Promise<RpcResponse<T, EpisodeId>>;
+
+  recommendationUndoReject<T = boolean>(id: number): Promise<RpcResponse<T, EpisodeId>>;
 }
 
 export interface IMyShowsBase {
@@ -459,4 +712,11 @@ export interface IMyShows
     IMyShowsManage,
     IMyShowsShows,
     IMyShowsMovies,
+    IMyShowsNews,
+    IMyShowsNotes,
+    IMyShowsAuth,
+    IMyShowsIAP,
+    IMyShowsSite,
+    IMyShowsPush,
+    IMyShowsRecommendation,
     IMyShowsBase {}

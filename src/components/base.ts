@@ -13,7 +13,8 @@ import {
   MovieSearch,
   ProfileGetResponse,
   ShowsModel,
-  EpisodeDetail
+  EpisodeDetail,
+  NotesSaveResponse
 } from '../types/models';
 import {
   EpisodeId,
@@ -1506,7 +1507,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
     showId: number,
     text: string,
     episodeId?: number,
-  ): Promise<RpcResponse<T, { showId: number; text: string; episodeId?: number }>> {
+  ): Promise<RpcResponse<T, NotesSaveResponse>> {
     return await this.query<T, { showId: number; text: string; episodeId?: number }>({
       method: 'notes.Save',
       params: {

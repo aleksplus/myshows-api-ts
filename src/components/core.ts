@@ -726,12 +726,12 @@ export class MyShowsCore implements IMyShowsBase {
     params: EpisodeId,
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<V, T = JSONRPCResponse>(
+  async generic<V extends Record<string, any>, T = JSONRPCResponse>(
     method: Method,
-    params: Record<string, any>,
-  ): Promise<RpcResponse<T | RpcError>> {
-    return await this.query<T, Record<string, any>>({
-      method: method,
+    params: V,
+  ): Promise<RpcResponse<T | RpcError, V>> {
+    return await this.query<T, V>({
+      method,
       params,
     });
   }

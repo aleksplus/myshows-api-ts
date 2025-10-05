@@ -434,42 +434,6 @@ export interface ShowDetail {
   onlineLinkExclusive?: OnlineLink;
 }
 
-export interface Show {
-  id?: number;
-  title?: string;
-  titleOriginal?: string;
-  description?: string;
-  totalSeasons?: number;
-  status?: string;
-  country?: string;
-  countryTitle?: string;
-  started?: string;
-  ended?: string;
-  year?: number;
-  kinopoiskId?: number;
-  kinopoiskRating?: number;
-  kinopoiskVoted?: number;
-  kinopoiskUrl?: string;
-  tvrageId?: number;
-  imdbId?: string;
-  imdbRating?: number;
-  imdbVoted?: number;
-  imdbUrl?: string;
-  watching?: number;
-  watchingTotal?: number;
-  voted?: number;
-  rating?: number;
-  runtime?: number;
-  runtimeTotal?: string;
-  images?: string[];
-  image?: string;
-  genreIds?: number[];
-  network?: Network;
-  episodes?: EpisodeSummary[];
-  onlineLinks?: OnlineLink[];
-  onlineLinkExclusive?: OnlineLink;
-}
-
 export interface EpisodeRating {
   showId?: number;
   episodeId?: number;
@@ -619,13 +583,19 @@ export interface PostNewsCommentResponse {
   news?: NewsSummary;
 }
 
-export interface SaveNoteResponse {
+export interface NoteSummary {
   id?: number;
   text?: string;
   createdAt?: string;
   show?: ShowSummary;
   episode?: EpisodeSummary;
 }
+
+export type NotesSaveResponse = {
+  showId: number;
+  text: string;
+  episodeId?: number;
+};
 
 export interface AuthRegisterResponse {
   access_token?: string;

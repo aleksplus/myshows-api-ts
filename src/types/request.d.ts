@@ -21,25 +21,26 @@ import {
   NewsComment,
   ShowSummary,
   ShowFilter,
-  ShowDetail,
-  Show,
   EpisodeDetail,
   Genre,
   ShowRank,
   EpisodeCommentsResponse,
   PostEpisodeCommentResponse,
-  EpisodeListItem,
-  NewsDetail,
   NewsCommentsResponse,
-  PostNewsCommentResponse,
-  SaveNoteResponse,
   AuthRegisterResponse,
   AuthLoginByAppleIDResponse,
   SiteMetaResponse,
   SiteCountersResponse,
   PaymentType,
   Product,
-  ShowRecommendation
+  ShowRecommendation,
+  NewsCategory,
+  NotesSaveResponse,
+  NoteSummary,
+  NewsDetail,
+  NewsSummary,
+  ShowDetail,
+  AchievementSummary
 } from './models';
 import {
   EGender,
@@ -340,7 +341,7 @@ export interface IMyShowsManage extends IMyShowsManageV3 {
     >
   >;
 
-  manageUnCheckEpisode<T, R = Rating>(
+  manageUnCheckEpisode<T>(
     id: number,
   ): Promise<RpcResponse<T, WithId>>;
 
@@ -459,14 +460,14 @@ export interface IMyShowsShows {
 
   showsFilters<T = ShowFilter[]>(search: Partial<ShowSearchParams>): Promise<RpcResponse<T, { search: Partial<ShowSearchParams> }>>;
 
-  showsGetById<T = ShowsGetByIdResponse>(id: number, withEpisodes?: boolean): Promise<RpcResponse<T, { showId: number; withEpisodes: boolean }>>;
+  showsGetById<T = ShowDetail>(id: number, withEpisodes?: boolean): Promise<RpcResponse<T, { showId: number; withEpisodes: boolean }>>;
 
-  showsGetByExternalId<T = ShowsGetByIdResponse>(
+  showsGetByExternalId<T = ShowDetail>(
     id: number,
     source: EShowSources,
   ): Promise<RpcResponse<T, { id: number; source: EShowSources }>>;
 
-  showsSearch<T = Show[]>(query: string): Promise<RpcResponse<T, WithQueryParam>>;
+  showsSearch<T = ShowDetail[]>(query: string): Promise<RpcResponse<T, WithQueryParam>>;
 
   showsSearchByFile<T = string[]>(file: string): Promise<RpcResponse<T, { file: string }>>;
 
@@ -490,9 +491,9 @@ export interface IMyShowsShows {
     isPositive: boolean,
   ): Promise<RpcResponse<T, { commentId: number; isPositive: boolean }>>;
 
-  showsEpisodeComments<T = ShowsEpisodeCommentsResponse>(id: number): Promise<RpcResponse<T, { episodeId: number }>>;
+  showsEpisodeComments<T = EpisodeCommentsResponse>(id: number): Promise<RpcResponse<T, { episodeId: number }>>;
 
-  showsPostEpisodeComment<T = ShowsPostEpisodeCommentResponse>(
+  showsPostEpisodeComment<T = PostEpisodeCommentResponse>(
     id: number,
     text: string,
     imageOrParent?: string | number,
@@ -563,7 +564,7 @@ export interface IMyShowsNews {
     }>,
   ): Promise<RpcResponse<T, { search: Partial<typeof search> }>>;
 
-  newsGetById<T = NewsGetByIdResponse>(newsId: number): Promise<RpcResponse<T, { newsId: number }>>;
+  newsGetById<T = NewsDetail>(newsId: number): Promise<RpcResponse<T, { newsId: number }>>;
 
   newsCategories<T = NewsCategory[]>(): Promise<RpcResponse<T>>;
 
@@ -575,7 +576,7 @@ export interface IMyShowsNews {
 
   newsVoteComment<T = number>(commentId: number, isPositive: boolean): Promise<RpcResponse<T, { commentId: number; isPositive: boolean }>>;
 
-  newsPostComment<T = NewsPostCommentResponse>(
+  newsPostComment<T = NewsComment>(
     newsId: number,
     text: string,
     image?: string,
@@ -702,7 +703,7 @@ export interface IMyShowsBase {
   generic<P, T = JSONRPCResponse>(
     method: Method,
     params: Record<string, unknown>,
-  ): Promise<T | RpcError>;
+  ): Promise<RpcResponse<T | RpcError, P>>;
 }
 
 export interface IMyShows

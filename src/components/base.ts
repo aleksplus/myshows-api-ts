@@ -1,22 +1,16 @@
-import {
-  EGenderVote,
-  EList,
-  EMovieStatus,
-  EShowSources,
-  EShowStatus,
-} from '../enums';
-import {
+import { EGenderVote, EList, type EMovieStatus, type EShowSources, type EShowStatus } from '../enums';
+import type {
+  EpisodeDetail,
   Feed,
-  ShowRank,
-  ShowRecommendation,
   MovieModel,
   MovieSearch,
+  NotesSaveResponse,
   ProfileGetResponse,
+  ShowRank,
+  ShowRecommendation,
   ShowsModel,
-  EpisodeDetail,
-  NotesSaveResponse
 } from '../types/models';
-import {
+import type {
   EpisodeId,
   EpisodeList,
   EpisodeListWithId,
@@ -33,7 +27,7 @@ import {
   WithShowId,
   WithStatusParam,
 } from '../types/request';
-import { RpcResponse } from '../types/rpcUtils';
+import type { RpcResponse } from '../types/rpcUtils';
 import { getSearchObjectProps } from '../utils';
 import { MyShowsCore } from './core';
 
@@ -42,9 +36,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns a list of shows (requires authentication).
    * @param {string} [list=MyShows.EList.FAVORITES] - A list name.
    */
-  async listsShows<T>(
-    list = EList.FAVORITES,
-  ): Promise<RpcResponse<T, EpisodeList>> {
+  async listsShows<T>(list = EList.FAVORITES): Promise<RpcResponse<T, EpisodeList>> {
     return await this.query<T, EpisodeList>({
       method: 'lists.Shows',
       params: {
@@ -87,9 +79,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns a list of episodes (requires authentication).
    * @param {string} [list=MyShows.EList.FAVORITES] - A list name, any of MyShows.EList enum.
    */
-  async listsEpisodes<T>(
-    list = EList.FAVORITES,
-  ): Promise<RpcResponse<T, EpisodeList>> {
+  async listsEpisodes<T>(list = EList.FAVORITES): Promise<RpcResponse<T, EpisodeList>> {
     return await this.query<T, EpisodeList>({
       method: 'lists.Episodes',
       params: {
@@ -205,9 +195,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Uncheck an episode as watched (requires authentication).
    * @param {int} id - Episode id.
    */
-  async manageUnCheckEpisode<T>(
-    id: number,
-  ): Promise<RpcResponse<T, EpisodeId>> {
+  async manageUnCheckEpisode<T>(id: number): Promise<RpcResponse<T, EpisodeId>> {
     return await this.query<T, EpisodeId>({
       method: 'manage.UnCheckEpisode',
       params: {
@@ -350,10 +338,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {int} id - Episode id.
    * @param {int} count
    */
-  async manageReWatchShow<T>(
-    id: number,
-    count: number,
-  ): Promise<RpcResponse<T, WithCountParam>> {
+  async manageReWatchShow<T>(id: number, count: number): Promise<RpcResponse<T, WithCountParam>> {
     return await this.query<T, WithCountParam>({
       method: 'manage.ReWatchShow',
       params: {
@@ -393,9 +378,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user's friend list (requires authentication only if login param omited).
    * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileFriends<T>(
-    login: string,
-  ): Promise<RpcResponse<T, WithLoginParam>> {
+  async profileFriends<T>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
     return await this.query<T, WithLoginParam>({
       method: 'profile.Friends',
       params: {
@@ -408,9 +391,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user's followers (requires authentication only if login param omited).
    * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileFollowers<T>(
-    login: string,
-  ): Promise<RpcResponse<T, WithLoginParam>> {
+  async profileFollowers<T>(login: string): Promise<RpcResponse<T, WithLoginParam>> {
     return await this.query<T, WithLoginParam>({
       method: 'profile.Followers',
       params: {
@@ -423,7 +404,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns friends feed for the current user (requires authentication).
    */
   async profileFriendsFeed<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.FriendsFeed',
       params: {},
     });
@@ -433,9 +414,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user's shows (requires authentication only if login param omited).
    * @param {string} [login] - Username. If omited method returns data for the current user.
    */
-  async profileShows<T>(
-    login: string,
-  ): Promise<RpcResponse<T[], WithLoginParam>> {
+  async profileShows<T>(login: string): Promise<RpcResponse<T[], WithLoginParam>> {
     return await this.query<T[], WithLoginParam>({
       method: 'profile.Shows',
       params: {
@@ -448,9 +427,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns show episodes for the current user (requires authentication).
    * @param {int} showId - ID of the show.
    */
-  async profileEpisodes<T>(
-    showId: number,
-  ): Promise<RpcResponse<T, WithShowId>> {
+  async profileEpisodes<T>(showId: number): Promise<RpcResponse<T, WithShowId>> {
     return await this.query<T, WithShowId>({
       method: 'profile.Episodes',
       params: {
@@ -463,7 +440,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns list of achievements for the current user (requires authentication).
    */
   async profileAchievements<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.Achievements',
       params: {},
     });
@@ -473,7 +450,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns list of achievements for the current user (requires authentication).
    */
   async profileNewComments<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.NewComments',
       params: {},
     });
@@ -496,9 +473,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns show statuses for specified shows (requires authentication).
    * @param {number[]} [showIds] - Array of show IDs. If omitted, returns all user's shows statuses.
    */
-  async profileShowStatuses<T>(
-    showIds?: number[],
-  ): Promise<RpcResponse<T, { showIds?: number[] }>> {
+  async profileShowStatuses<T>(showIds?: number[]): Promise<RpcResponse<T, { showIds?: number[] }>> {
     return await this.query<T, { showIds?: number[] }>({
       method: 'profile.ShowStatuses',
       params: {
@@ -524,9 +499,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user's episode by episode ID (requires authentication).
    * @param {int} episodeId - Episode ID.
    */
-  async profileEpisode<T>(
-    episodeId: number,
-  ): Promise<RpcResponse<T, { episodeId: number }>> {
+  async profileEpisode<T>(episodeId: number): Promise<RpcResponse<T, { episodeId: number }>> {
     return await this.query<T, { episodeId: number }>({
       method: 'profile.Episode',
       params: {
@@ -540,10 +513,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {string} alias - Achievement alias.
    * @param {string} key - Achievement key.
    */
-  async profileAchievement<T>(
-    alias: string,
-    key: string,
-  ): Promise<RpcResponse<T, { alias: string; key: string }>> {
+  async profileAchievement<T>(alias: string, key: string): Promise<RpcResponse<T, { alias: string; key: string }>> {
     return await this.query<T, { alias: string; key: string }>({
       method: 'profile.Achievement',
       params: {
@@ -557,7 +527,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns new news comments count for the current user (requires authentication).
    */
   async profileNewNewsComments<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.NewNewsComments',
       params: {},
     });
@@ -567,7 +537,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns new comment replies count for the current user (requires authentication).
    */
   async profileNewCommentReplies<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.NewCommentReplies',
       params: {},
     });
@@ -577,7 +547,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns new news comment replies count for the current user (requires authentication).
    */
   async profileNewNewsCommentReplies<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.NewNewsCommentReplies',
       params: {},
     });
@@ -587,7 +557,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns various counters for the current user (requires authentication).
    */
   async profileCounters<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.Counters',
       params: {},
     });
@@ -597,7 +567,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns user settings (requires authentication).
    */
   async profileSettings<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.Settings',
       params: {},
     });
@@ -622,18 +592,18 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns episode comments count for user by login (requires authentication only if login param omitted).
    * @param {string} [login] - Username. If omitted returns data for the current user.
    */
-  async profileEpisodeCommentsCount<T>(login?: undefined): Promise<RpcResponse<T, {}>>;
-  async profileEpisodeCommentsCount<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
-  async profileEpisodeCommentsCount<T>(
+  async profileEpisodeCommentsCount<T = number>(login?: undefined): Promise<RpcResponse<T>>;
+  async profileEpisodeCommentsCount<T = number>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
+  async profileEpisodeCommentsCount<T = number>(
     login?: string,
-  ): Promise<RpcResponse<T, {}> | RpcResponse<T, WithLoginParam>> {
+  ): Promise<RpcResponse<T> | RpcResponse<T, WithLoginParam>> {
     if (login) {
       return await this.query<T, WithLoginParam>({
         method: 'profile.EpisodeCommentsCount',
         params: { login },
       });
     } else {
-      return await this.query<T, {}>({
+      return await this.query<T>({
         method: 'profile.EpisodeCommentsCount',
         params: {},
       });
@@ -668,18 +638,16 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns news comments count for user by login (requires authentication only if login param omitted).
    * @param {string} [login] - Username. If omitted returns data for the current user.
    */
-  async profileNewsCommentsCount<T>(login?: undefined): Promise<RpcResponse<T, {}>>;
+  async profileNewsCommentsCount<T>(login?: undefined): Promise<RpcResponse<T>>;
   async profileNewsCommentsCount<T>(login: string): Promise<RpcResponse<T, WithLoginParam>>;
-  async profileNewsCommentsCount<T>(
-    login?: string,
-  ): Promise<RpcResponse<T, {}> | RpcResponse<T, WithLoginParam>> {
+  async profileNewsCommentsCount<T>(login?: string): Promise<RpcResponse<T> | RpcResponse<T, WithLoginParam>> {
     if (login) {
       return await this.query<T, WithLoginParam>({
         method: 'profile.NewsCommentsCount',
         params: { login },
       });
     } else {
-      return await this.query<T, {}>({
+      return await this.query<T>({
         method: 'profile.NewsCommentsCount',
         params: {},
       });
@@ -714,7 +682,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Marks all user comments as viewed (requires authentication).
    */
   async profileMarkCommentsAsViewed<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'profile.MarkCommentsAsViewed',
       params: {},
     });
@@ -839,9 +807,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns matched shows (does not require authentication).
    * @param {string} query - Query string.
    */
-  async showsSearch<T extends ShowsModel>(
-    query: string,
-  ): Promise<RpcResponse<T, WithQueryParam>> {
+  async showsSearch<T extends ShowsModel>(query: string): Promise<RpcResponse<T, WithQueryParam>> {
     return await this.query<T, WithQueryParam>({
       method: 'shows.Search',
       params: {
@@ -854,9 +820,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns matched shows (does not require authentication).
    * @param {string} file - Query string.
    */
-  async showsSearchByFile<T>(
-    file: string,
-  ): Promise<RpcResponse<T, { file: string }>> {
+  async showsSearchByFile<T>(file: string): Promise<RpcResponse<T, { file: string }>> {
     return await this.query<T, { file: string }>({
       method: 'shows.SearchByFile',
       params: {
@@ -870,10 +834,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {int} fromId - Starting show id (excluding).
    * @param {int} [count=100] - Number of ids (max 1000).
    */
-  async showsIds<T>(
-    fromId: number,
-    count: number,
-  ): Promise<RpcResponse<T, { fromId: number; count: number }>> {
+  async showsIds<T>(fromId: number, count: number): Promise<RpcResponse<T, { fromId: number; count: number }>> {
     return await this.query<T, { fromId: number; count: number }>({
       method: 'shows.Ids',
       params: {
@@ -900,7 +861,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns a list of genres (does not require authentication).
    */
   async showsGenres<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'shows.Genres',
       params: {},
     });
@@ -1004,7 +965,17 @@ export class MyShows extends MyShowsCore implements IMyShows {
     text: string,
     image: string,
     parentId?: number,
-  ): Promise<RpcResponse<T, { episodeId: number; text: string; image: string; parentCommentId?: number }>>;
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        episodeId: number;
+        text: string;
+        image: string;
+        parentCommentId?: number;
+      }
+    >
+  >;
   async showsPostEpisodeComment<T>(
     id: number,
     text: string,
@@ -1016,23 +987,14 @@ export class MyShows extends MyShowsCore implements IMyShows {
     imageOrParent?: string | number,
     parentId?: number,
   ): Promise<RpcResponse<T>> {
-    const params: any = {
-      episodeId: id,
-      text,
-    };
-
-    if (typeof imageOrParent === 'string') {
-      params.image = imageOrParent;
-      if (typeof parentId === 'number') {
-        params.parentCommentId = parentId;
-      }
-    } else if (typeof imageOrParent === 'number') {
-      params.parentCommentId = imageOrParent;
-    }
-
-    return await this.query<T, any>({
+    return await this.query<T>({
       method: 'shows.PostEpisodeComment',
-      params,
+      params: {
+        episodeId: id,
+        text,
+        imageOrParent,
+        parentId,
+      },
     });
   }
 
@@ -1064,9 +1026,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Delete episode comment (requires authentication).
    * @param {int} id - Comment id.
    */
-  async showsDeleteEpisodeComment<T>(
-    id: number,
-  ): Promise<RpcResponse<T, { commentId: number }>> {
+  async showsDeleteEpisodeComment<T>(id: number): Promise<RpcResponse<T, { commentId: number }>> {
     return await this.query<T, { commentId: number }>({
       method: 'shows.DeleteEpisodeComment',
       params: {
@@ -1092,7 +1052,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns a movie by id
    * @param {int} id - Show id.
    */
-  async moviesGetById<T>(id: number) {
+  async moviesGetById(id: number) {
     return await this.query<
       MovieModel,
       {
@@ -1160,9 +1120,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {number} [search.year] - year of registration.
    * @param {string} [search.gender] - gender, any of EGender enum.
    */
-  async usersCount<T>(
-    search: SearchObjectOptions = {},
-  ): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>> {
+  async usersCount<T>(search: SearchObjectOptions = {}): Promise<RpcResponse<T, WithSearchParam<SearchObjectOptions>>> {
     const picked = getSearchObjectProps(search);
 
     return await this.query<T, WithSearchParam<SearchObjectOptions>>({
@@ -1179,9 +1137,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * returns total number of website's users (does not require authentication).
    * @param {string} [query] - query string.
    */
-  async usersFiltersCounters<T>(
-    query: string,
-  ): Promise<RpcResponse<T, WithSearchParam<WithQueryParam>>> {
+  async usersFiltersCounters<T>(query: string): Promise<RpcResponse<T, WithSearchParam<WithQueryParam>>> {
     return await this.query<T, WithSearchParam<WithQueryParam>>({
       method: 'users.FiltersCounters',
       params: {
@@ -1292,9 +1248,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns news by id (does not require authentication).
    * @param {int} newsId - News id.
    */
-  async newsGetById<T>(
-    newsId: number,
-  ): Promise<RpcResponse<T, { newsId: number }>> {
+  async newsGetById<T>(newsId: number): Promise<RpcResponse<T, { newsId: number }>> {
     return await this.query<T, { newsId: number }>({
       method: 'news.GetById',
       params: {
@@ -1307,7 +1261,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns news categories (does not require authentication).
    */
   async newsCategories<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'news.Categories',
       params: {},
     });
@@ -1317,9 +1271,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns news comments (does not require authentication).
    * @param {int} newsId - News id.
    */
-  async newsComments<T>(
-    newsId: number,
-  ): Promise<RpcResponse<T, { newsId: number }>> {
+  async newsComments<T>(newsId: number): Promise<RpcResponse<T, { newsId: number }>> {
     return await this.query<T, { newsId: number }>({
       method: 'news.Comments',
       params: {
@@ -1332,9 +1284,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Marks news comments as viewed for the current user (requires authentication).
    * @param {int} newsId - News id.
    */
-  async newsViewComments<T>(
-    newsId: number,
-  ): Promise<RpcResponse<T, { newsId: number }>> {
+  async newsViewComments<T>(newsId: number): Promise<RpcResponse<T, { newsId: number }>> {
     return await this.query<T, { newsId: number }>({
       method: 'news.ViewComments',
       params: {
@@ -1431,9 +1381,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Delete news comment (requires authentication).
    * @param {int} commentId - Comment id.
    */
-  async newsDeleteComment<T>(
-    commentId: number,
-  ): Promise<RpcResponse<T, { commentId: number }>> {
+  async newsDeleteComment<T>(commentId: number): Promise<RpcResponse<T, { commentId: number }>> {
     return await this.query<T, { commentId: number }>({
       method: 'news.DeleteComment',
       params: {
@@ -1471,8 +1419,24 @@ export class MyShows extends MyShowsCore implements IMyShows {
     search: { isShow: boolean; isEpisode: boolean },
     page = 0,
     pageSize = 100,
-  ): Promise<RpcResponse<T, { search: { isShow: boolean; isEpisode: boolean }; page: number; pageSize: number }>> {
-    return await this.query<T, { search: { isShow: boolean; isEpisode: boolean }; page: number; pageSize: number }>({
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        search: { isShow: boolean; isEpisode: boolean };
+        page: number;
+        pageSize: number;
+      }
+    >
+  > {
+    return await this.query<
+      T,
+      {
+        search: { isShow: boolean; isEpisode: boolean };
+        page: number;
+        pageSize: number;
+      }
+    >({
       method: 'notes.Get',
       params: {
         search,
@@ -1486,9 +1450,10 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns total count of notes matching search criteria (requires authentication).
    * @param {object} search - Search criteria object.
    */
-  async notesCount<T>(
-    search: { isShow: boolean; isEpisode: boolean },
-  ): Promise<RpcResponse<T, { search: { isShow: boolean; isEpisode: boolean } }>> {
+  async notesCount<T>(search: {
+    isShow: boolean;
+    isEpisode: boolean;
+  }): Promise<RpcResponse<T, { search: { isShow: boolean; isEpisode: boolean } }>> {
     return await this.query<T, { search: { isShow: boolean; isEpisode: boolean } }>({
       method: 'notes.Count',
       params: {
@@ -1503,11 +1468,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {string} text - Note text.
    * @param {int} [episodeId] - Episode id.
    */
-  async notesSave<T>(
-    showId: number,
-    text: string,
-    episodeId?: number,
-  ): Promise<RpcResponse<T, NotesSaveResponse>> {
+  async notesSave<T>(showId: number, text: string, episodeId?: number): Promise<RpcResponse<T, NotesSaveResponse>> {
     return await this.query<T, { showId: number; text: string; episodeId?: number }>({
       method: 'notes.Save',
       params: {
@@ -1559,8 +1520,28 @@ export class MyShows extends MyShowsCore implements IMyShows {
     login: string,
     email: string,
     password: string,
-  ): Promise<RpcResponse<T, { clientId: string; sig: string; login: string; email: string; password: string }>> {
-    return await this.query<T, { clientId: string; sig: string; login: string; email: string; password: string }>({
+  ): Promise<
+    RpcResponse<
+      T,
+      {
+        clientId: string;
+        sig: string;
+        login: string;
+        email: string;
+        password: string;
+      }
+    >
+  > {
+    return await this.query<
+      T,
+      {
+        clientId: string;
+        sig: string;
+        login: string;
+        email: string;
+        password: string;
+      }
+    >({
       method: 'auth.Register',
       params: {
         clientId,
@@ -1597,9 +1578,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Unlink social profile (requires authentication).
    * @param {string} provider - Social provider from EShowSources enum.
    */
-  async authUnlinkSocialProfile<T>(
-    provider: EShowSources,
-  ): Promise<RpcResponse<T, { provider: EShowSources }>> {
+  async authUnlinkSocialProfile<T>(provider: EShowSources): Promise<RpcResponse<T, { provider: EShowSources }>> {
     return await this.query<T, { provider: EShowSources }>({
       method: 'auth.UnlinkSocialProfile',
       params: {
@@ -1652,9 +1631,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Validate Android receipt (requires authentication).
    * @param {string} payload - Receipt payload.
    */
-  async iapValidateReceiptAndroid<T>(
-    payload: string,
-  ): Promise<RpcResponse<T, { payload: string }>> {
+  async iapValidateReceiptAndroid<T>(payload: string): Promise<RpcResponse<T, { payload: string }>> {
     return await this.query<T, { payload: string }>({
       method: 'iap.ValidateReceiptAndroid',
       params: {
@@ -1681,7 +1658,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns website counters (does not require authentication).
    */
   async siteCounters<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'site.Counters',
       params: {},
     });
@@ -1691,9 +1668,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns popular shows (does not require authentication).
    * @param {int} [count=500] - Number of shows (max 500).
    */
-  async siteShowsPopular<T>(
-    count = 500,
-  ): Promise<RpcResponse<T, { count: number }>> {
+  async siteShowsPopular<T>(count = 500): Promise<RpcResponse<T, { count: number }>> {
     return await this.query<T, { count: number }>({
       method: 'site.ShowsPopular',
       params: {
@@ -1706,9 +1681,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns online shows (does not require authentication).
    * @param {int} [count=500] - Number of shows (max 500).
    */
-  async siteShowsOnline<T>(
-    count = 500,
-  ): Promise<RpcResponse<T, { count: number }>> {
+  async siteShowsOnline<T>(count = 500): Promise<RpcResponse<T, { count: number }>> {
     return await this.query<T, { count: number }>({
       method: 'site.ShowsOnline',
       params: {
@@ -1721,9 +1694,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns online promo shows (does not require authentication).
    * @param {int} [count=500] - Number of shows (max 500).
    */
-  async siteShowsOnlinePromo<T>(
-    count = 500,
-  ): Promise<RpcResponse<T, { count: number }>> {
+  async siteShowsOnlinePromo<T>(count = 500): Promise<RpcResponse<T, { count: number }>> {
     return await this.query<T, { count: number }>({
       method: 'site.ShowsOnlinePromo',
       params: {
@@ -1754,7 +1725,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns payment types (does not require authentication).
    */
   async sitePaymentTypes<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'site.PaymentTypes',
       params: {},
     });
@@ -1764,7 +1735,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Returns products (does not require authentication).
    */
   async siteProducts<T>(): Promise<RpcResponse<T>> {
-    return await this.query<T, {}>({
+    return await this.query<T>({
       method: 'site.Products',
       params: {},
     });
@@ -1794,10 +1765,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * @param {string} token - Push token.
    * @param {string} idfa - IDFA.
    */
-  async pushRegisterTokenIOS<T>(
-    token: string,
-    idfa: string,
-  ): Promise<RpcResponse<T, { token: string; idfa: string }>> {
+  async pushRegisterTokenIOS<T>(token: string, idfa: string): Promise<RpcResponse<T, { token: string; idfa: string }>> {
     return await this.query<T, { token: string; idfa: string }>({
       method: 'push.RegisterTokenIOS',
       params: {
@@ -1829,9 +1797,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Register web push token (requires authentication).
    * @param {string} token - Push token.
    */
-  async pushRegisterTokenWeb<T>(
-    token: string,
-  ): Promise<RpcResponse<T, { token: string }>> {
+  async pushRegisterTokenWeb<T>(token: string): Promise<RpcResponse<T, { token: string }>> {
     return await this.query<T, { token: string }>({
       method: 'push.RegisterTokenWeb',
       params: {
@@ -1844,9 +1810,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Send test push to Android (requires authentication).
    * @param {string} pushType - Push type.
    */
-  async pushSendTestAndroid<T>(
-    pushType: string,
-  ): Promise<RpcResponse<T, { pushType: string }>> {
+  async pushSendTestAndroid<T>(pushType: string): Promise<RpcResponse<T, { pushType: string }>> {
     return await this.query<T, { pushType: string }>({
       method: 'push.SendTestAndroid',
       params: {
@@ -1859,9 +1823,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Send test push to iOS (requires authentication).
    * @param {string} pushType - Push type.
    */
-  async pushSendTestIOS<T>(
-    pushType: string,
-  ): Promise<RpcResponse<T, { pushType: string }>> {
+  async pushSendTestIOS<T>(pushType: string): Promise<RpcResponse<T, { pushType: string }>> {
     return await this.query<T, { pushType: string }>({
       method: 'push.SendTestIOS',
       params: {
@@ -1875,9 +1837,7 @@ export class MyShows extends MyShowsCore implements IMyShows {
    * Get recommendations (requires authentication).
    * @param {int} [count=50] - Number of recommendations.
    */
-  async recommendationGet<T = ShowRecommendation[]>(
-    count = 50,
-  ): Promise<RpcResponse<T, { count: number }>> {
+  async recommendationGet<T = ShowRecommendation[]>(count = 50): Promise<RpcResponse<T, { count: number }>> {
     return await this.query<T, { count: number }>({
       method: 'recommendation.Get',
       params: {

@@ -1,11 +1,6 @@
-import { JSONRPCErrorResponse, JSONRPCResponse } from 'json-rpc-2.0';
+import type { JSONRPCErrorResponse, JSONRPCResponse } from 'json-rpc-2.0';
 
-type OmitRpc<
-  T extends {
-    jsonrpc: any;
-    id: any;
-  },
-> = Omit<T, 'jsonrpc' | 'id'>;
+type OmitRpc<T extends {}> = Omit<T, 'jsonrpc' | 'id'>;
 export type OathResponseError = {
   error: string;
   error_description: string;
@@ -24,5 +19,5 @@ export type OathResponseV3Done = {
 export type OathResponseV3 = OathResponseError | OathResponseV3Done;
 
 export type RpcError = OmitRpc<JSONRPCErrorResponse>;
-export type RpcResult<T = any> = OmitRpc<JSONRPCResponse>;
-export type RpcResponse<T = any, P = {}> = (RpcResult<T> & P) | RpcError;
+export type RpcResult = OmitRpc<JSONRPCResponse>;
+export type RpcResponse<T = any, P = {}> = (RpcResult & { result?: T } & P) | RpcError;

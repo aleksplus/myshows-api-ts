@@ -1,7 +1,8 @@
-import { JSONRPCResponse } from 'json-rpc-2.0';
-import { AxiosInstance } from 'axios';
-
-import {
+import type { AxiosInstance } from 'axios';
+import type { JSONRPCResponse } from 'json-rpc-2.0';
+import { AUTH_URL, AUTH_URL_V3, BASE_URL_V2, BASE_URL_V3, DEFAULT_PARAMS } from '../constants';
+import type { EList, EMovieStatus, EShowSources, EShowStatus } from '../enums';
+import type {
   Credentials,
   DefaultParams,
   EpisodeId,
@@ -17,7 +18,7 @@ import {
   WithLoginParam,
   WithQueryParam,
 } from '../types/request';
-import {
+import type {
   OathResponse,
   OathResponseDone,
   OathResponseError,
@@ -26,21 +27,8 @@ import {
   RpcError,
   RpcResponse,
 } from '../types/rpcUtils';
-import { EList, EMovieStatus, EShowSources, EShowStatus } from '../enums';
 
-import {
-  AUTH_URL,
-  AUTH_URL_V3,
-  BASE_URL_V2,
-  BASE_URL_V3,
-  DEFAULT_PARAMS,
-} from '../constants';
-
-import {
-  createQueryInstance,
-  handleErrorResponse,
-  queryHandler,
-} from '../utils';
+import { createQueryInstance, handleErrorResponse, queryHandler } from '../utils';
 
 export class MyShowsCore implements IMyShowsBase {
   private readonly credentials: Credentials;
@@ -61,20 +49,15 @@ export class MyShowsCore implements IMyShowsBase {
   /**
    * Returns an error if log in fails.
    */
-  async login(): Promise<RpcError | void> {
+  async login(): Promise<RpcError | undefined> {
     try {
-      const response = await this.axios.post<OathResponse>(
-        AUTH_URL,
-        this.credentials,
-      );
+      const response = await this.axios.post<OathResponse>(AUTH_URL, this.credentials);
 
       if ((response.data as OathResponseError).error) {
         return handleErrorResponse(response);
       }
 
-      this.axios.defaults.headers.common['Authorization'] = `bearer ${
-        (response.data as OathResponseDone).access_token
-      }`;
+      this.axios.defaults.headers.common.Authorization = `bearer ${(response.data as OathResponseDone).access_token}`;
     } catch (error) {
       return { error } as RpcError;
     }
@@ -83,7 +66,7 @@ export class MyShowsCore implements IMyShowsBase {
   /**
    * Returns an error if log in fails.
    */
-  async loginV3(): Promise<RpcError | void> {
+  async loginV3(): Promise<RpcError | undefined> {
     try {
       const response = await this.axiosV3.post<OathResponseV3>(AUTH_URL_V3, {
         login: this.credentials.username,
@@ -94,11 +77,8 @@ export class MyShowsCore implements IMyShowsBase {
         return handleErrorResponse(response);
       }
 
-      this.axiosV3.defaults.headers.common.cookies =
-        response.headers['set-cookie']?.join(';') ?? '';
-      this.axiosV3.defaults.headers.common['authorization2'] = `Bearer ${
-        (response.data as OathResponseV3Done).token
-      }`;
+      this.axiosV3.defaults.headers.common.cookies = response.headers['set-cookie']?.join(';') ?? '';
+      this.axiosV3.defaults.headers.common.authorization2 = `Bearer ${(response.data as OathResponseV3Done).token}`;
     } catch (error) {
       return { error } as RpcError;
     }
@@ -132,7 +112,7 @@ export class MyShowsCore implements IMyShowsBase {
     instance?: AxiosInstance,
   ) {
     return await queryHandler<T, P>({
-      query: this.axiosV3,
+      query: instance ?? this.axiosV3,
       defaultParams: this.defaultParams,
       ...params,
     });
@@ -158,10 +138,7 @@ export class MyShowsCore implements IMyShowsBase {
     params: WithLoginParam,
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'profile.FriendsFeed',
-    params: object,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'profile.FriendsFeed', params: object): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'profile.ShowStatuses',
@@ -231,10 +208,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'profile.MarkCommentsAsViewed',
-    params: object,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'profile.MarkCommentsAsViewed', params: object): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'shows.Get',
@@ -268,10 +242,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'shows.Search',
-    params: WithQueryParam,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'shows.Search', params: WithQueryParam): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'shows.SearchByFile',
@@ -288,15 +259,9 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'shows.Episode',
-    params: EpisodeId,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'shows.Episode', params: EpisodeId): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'shows.Genres',
-    params: object,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'shows.Genres', params: object): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'shows.Top',
@@ -372,11 +337,7 @@ export class MyShowsCore implements IMyShowsBase {
   ): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
-    method:
-      | 'lists.AddEpisode'
-      | 'lists.RemoveEpisode'
-      | 'lists.AddShow'
-      | 'lists.RemoveShow',
+    method: 'lists.AddEpisode' | 'lists.RemoveEpisode' | 'lists.AddShow' | 'lists.RemoveShow',
     params: {
       id: number;
       list: EList;
@@ -407,10 +368,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'manage.UnCheckEpisode',
-    params: EpisodeId,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'manage.UnCheckEpisode', params: EpisodeId): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'manage.RateEpisodesBulk',
@@ -457,10 +415,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'users.Count' | 'users.Filters',
-    params: SearchParams,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'users.Count' | 'users.Filters', params: SearchParams): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'notes.Get',
@@ -493,10 +448,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'notes.Delete' | 'notes.Restore',
-    params: EpisodeId,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'notes.Delete' | 'notes.Restore', params: EpisodeId): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'auth.Register',
@@ -556,10 +508,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'site.Counters',
-    params: object,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'site.Counters', params: object): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'site.ShowsPopular' | 'site.ShowsOnline' | 'site.ShowsOnlinePromo',
@@ -576,10 +525,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'site.PaymentTypes' | 'site.Products',
-    params: object,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'site.PaymentTypes' | 'site.Products', params: object): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'site.CreateProTransaction',
@@ -628,10 +574,7 @@ export class MyShowsCore implements IMyShowsBase {
     },
   ): Promise<RpcResponse<T> | RpcError>;
 
-  async generic<T>(
-    method: 'news.Categories',
-    params: object,
-  ): Promise<RpcResponse<T> | RpcError>;
+  async generic<T>(method: 'news.Categories', params: object): Promise<RpcResponse<T> | RpcError>;
 
   async generic<T>(
     method: 'news.TrackComments',

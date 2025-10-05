@@ -14,7 +14,6 @@ import type {
   EpisodeId,
   EpisodeList,
   EpisodeListWithId,
-  IMyShows,
   SearchObjectOptions,
   ShowSearchParams,
   WithCountParam,
@@ -31,7 +30,7 @@ import type { RpcResponse } from '../types/rpcUtils';
 import { getSearchObjectProps } from '../utils';
 import { MyShowsCore } from './core';
 
-export class MyShows extends MyShowsCore implements IMyShows {
+export class MyShows extends MyShowsCore {
   /**
    * Returns a list of shows (requires authentication).
    * @param {string} [list=MyShows.EList.FAVORITES] - A list name.

@@ -6,7 +6,6 @@ import type {
   Credentials,
   DefaultParams,
   EpisodeId,
-  IMyShowsBase,
   Method,
   MethodV3,
   QueryHandlerParams,
@@ -30,7 +29,7 @@ import type {
 
 import { createQueryInstance, handleErrorResponse, queryHandler } from '../utils';
 
-export class MyShowsCore implements IMyShowsBase {
+export class MyShowsCore {
   private readonly credentials: Credentials;
   protected axios: AxiosInstance;
   protected axiosV3: AxiosInstance;

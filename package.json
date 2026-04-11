@@ -23,7 +23,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "axios": "0.27.2"
+    "axios": "1.15.0"
   },
   "devDependencies": {},
   "optionalDependencies": {

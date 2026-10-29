@@ -1,7 +1,14 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
-import type { JSONRPCErrorResponse, JSONRPCResponse } from 'json-rpc-2.0';
 import type { QueryHandlerParams, SearchObjectOptions } from './types/request';
-import type { OathResponse, OathResponseError, OathResponseV3, RpcError, RpcResponse } from './types/rpcUtils';
+import type {
+  JSONRPCErrorResponse,
+  JSONRPCResponse,
+  OathResponse,
+  OathResponseError,
+  OathResponseV3,
+  RpcError,
+  RpcResponse,
+} from './types/rpcUtils';
 
 export function createQueryInstance(url: string): AxiosInstance {
   return axios.create({

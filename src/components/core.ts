@@ -1,5 +1,4 @@
 import type { AxiosInstance } from 'axios';
-import type { JSONRPCResponse } from 'json-rpc-2.0';
 import { AUTH_URL, AUTH_URL_V3, BASE_URL_V2, BASE_URL_V3, DEFAULT_PARAMS } from '../constants';
 import type { EList, EMovieStatus, EShowSources, EShowStatus } from '../enums';
 import type {
@@ -18,6 +17,7 @@ import type {
   WithQueryParam,
 } from '../types/request';
 import type {
+  JSONRPCResponse,
   OathResponse,
   OathResponseDone,
   OathResponseError,

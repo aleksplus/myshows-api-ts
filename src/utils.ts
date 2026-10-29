@@ -10,10 +10,39 @@ import type {
   RpcResponse,
 } from './types/rpcUtils';
 
-export function createQueryInstance(url: string): AxiosInstance {
+/** Default request timeout for API calls. */
+export const DEFAULT_TIMEOUT_MS = 15_000;
+
+export function createQueryInstance(url: string, config: AxiosRequestConfig = {}): AxiosInstance {
   return axios.create({
     baseURL: url,
+    timeout: DEFAULT_TIMEOUT_MS,
+    ...config,
   });
+}
+
+/**
+ * Normalizes any thrown value (AxiosError, Error, anything else) into the
+ * `RpcError` shape, so consumers always get `{ error: { code, message } }`.
+ */
+export function toRpcError(error: unknown): RpcError {
+  if (axios.isAxiosError(error)) {
+    return {
+      error: {
+        code: error.response?.status ?? 0,
+        message:
+          (error.response?.data as OathResponseError | undefined)?.error_description ??
+          error.response?.statusText ??
+          error.message,
+      },
+    };
+  }
+  return {
+    error: {
+      code: 0,
+      message: error instanceof Error ? error.message : String(error),
+    },
+  };
 }
 
 export async function queryHandler<T, P = {}>(
@@ -31,16 +60,23 @@ export async function queryHandler<T, P = {}>(
       config,
     );
 
-    return (response.data as JSONRPCResponse)?.result
-      ? {
-          ...params,
-          ...response.data,
-        }
-      : ({
-          error: (response.data as JSONRPCErrorResponse)?.error,
-        } as RpcError);
+    // A falsy `result` (false, 0, '' …) is a valid payload; only a JSON-RPC
+    // error object marks the call as failed.
+    if (!response.data || (response.data as JSONRPCErrorResponse).error) {
+      return {
+        error: (response.data as JSONRPCErrorResponse)?.error ?? {
+          code: response.status,
+          message: 'Malformed JSON-RPC response',
+        },
+      } as RpcError;
+    }
+
+    return {
+      ...params,
+      ...(response.data as JSONRPCResponse),
+    };
   } catch (error) {
-    return { error } as RpcError;
+    return toRpcError(error);
   }
 }
 

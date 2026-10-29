@@ -1,6 +1,6 @@
 import type { AxiosInstance } from 'axios';
 
-import { EGender, EList } from '../enums';
+import { EGender, EGenderVote, EList, EMovieStatus, EShowSources, EShowStatus } from '../enums';
 
 export type MethodV2 =
   | 'profile.Get'
@@ -221,4 +221,162 @@ export interface QueryHandlerParams<P = QueryParams, M = Method> {
   params: P;
   query: AxiosInstance;
   url?: string;
+}
+
+/**
+ * Maps every supported RPC method to its params object — the single source
+ * of truth used by `MyShowsCore.generic()`. Field optionality mirrors the
+ * API spec (https://api.myshows.me/shared/doc/swagger.json).
+ */
+export interface MethodParams {
+  // profile
+  'profile.Get': { login?: string };
+  'profile.Feed': { login?: string };
+  'profile.Friends': { login?: string };
+  'profile.Followers': { login?: string };
+  'profile.Friendship': WithLoginParam;
+  'profile.FriendsFeed': object;
+  'profile.Shows': { login?: string };
+  'profile.ShowStatuses': { showIds?: number[] };
+  'profile.Episodes': WithShowId;
+  'profile.Show': WithShowId;
+  'profile.Episode': { episodeId: number };
+  'profile.Achievements': { login?: string; withPublic?: boolean };
+  'profile.Achievement': { alias: string; key: string };
+  'profile.NewComments': object;
+  'profile.NewNewsComments': object;
+  'profile.NewCommentReplies': object;
+  'profile.NewNewsCommentReplies': object;
+  'profile.Counters': object;
+  'profile.Settings': object;
+  'profile.SaveSettings': { settings: Array<{ alias: string; value: string }> };
+  'profile.EpisodeCommentsCount': { login?: string };
+  'profile.EpisodeComments': { login?: string; page?: number; pageSize?: number; sort?: string };
+  'profile.NewsCommentsCount': { login?: string };
+  'profile.NewsComments': { login?: string; page?: number; pageSize?: number; sort?: string };
+  'profile.MarkCommentsAsViewed': object;
+  // shows
+  'shows.Get': { search: Partial<ShowSearchParams>; page?: number; pageSize?: number };
+  'shows.Count': { search: Partial<ShowSearchParams> };
+  'shows.Filters': { search: Partial<ShowSearchParams> };
+  'shows.GetById': { showId: number; withEpisodes?: boolean };
+  'shows.GetByExternalId': { id: number; source: EShowSources };
+  'shows.Search': WithQueryParam;
+  'shows.SearchByFile': { file: string };
+  'shows.Ids': { fromId: number; count?: number };
+  'shows.Episode': EpisodeId;
+  'shows.Genres': object;
+  'shows.Top': { mode?: EGenderVote; count?: number };
+  'shows.EpisodeComments': { episodeId: number };
+  'shows.ViewEpisodeComments': { episodeId: number };
+  'shows.TrackEpisodeComments': { episodeId: number; isTracked: boolean };
+  'shows.VoteEpisodeComment': { commentId: number; isPositive: boolean };
+  'shows.PostEpisodeComment': { episodeId: number; text: string; image?: string; parentCommentId?: number };
+  'shows.UpdateEpisodeComment': { commentId: number; text: string; image?: string; deleteImage?: boolean };
+  'shows.DeleteEpisodeComment': { commentId: number };
+  'shows.TranslateEpisodeComment': { commentId: number; language?: string };
+  // lists
+  'lists.Episodes': { list: EList };
+  'lists.Shows': { list: EList };
+  'lists.AddEpisode': { id: number; list: EList };
+  'lists.RemoveEpisode': { id: number; list: EList };
+  'lists.AddShow': { id: number; list: EList };
+  'lists.RemoveShow': { id: number; list: EList };
+  // manage
+  'manage.SetShowStatus': { id: number; status: EShowStatus };
+  'manage.RateShow': { id: number; rating: Rating };
+  'manage.CheckEpisode': { id: number; rating?: Rating };
+  'manage.UnCheckEpisode': EpisodeId;
+  'manage.RateEpisode': { id: number; rating: Rating };
+  'manage.RateEpisodesBulk': { r1: number[]; r2: number[]; r3: number[]; r4: number[]; r5: number[] };
+  'manage.SyncEpisodes': { showId: number; episodeIds: number[] };
+  'manage.SyncEpisodesDelta': { showId: number; checkedIds: number[]; unCheckedIds: number[] };
+  'manage.MoveEpisodeDate': { episodeId: number; shiftDays: number };
+  'manage.ReWatchShow': WithCountParam;
+  // users
+  'users.Search': { search?: SearchObjectOptions; page?: number; pageSize?: number };
+  'users.Count': { search?: SearchObjectOptions };
+  'users.Filters': { search?: SearchObjectOptions };
+  'users.Follow': WithLoginParam;
+  'users.UnFollow': WithLoginParam;
+  'users.FiltersCounters': WithSearchParam<WithQueryParam>;
+  // notes
+  'notes.Get': { search?: { isShow?: boolean; isEpisode?: boolean }; page?: number; pageSize?: number };
+  'notes.Count': { search?: { isShow?: boolean; isEpisode?: boolean } };
+  'notes.Save': { showId: number; text: string; episodeId?: number };
+  'notes.Delete': EpisodeId;
+  'notes.Restore': EpisodeId;
+  // auth
+  'auth.Register': { clientId: string; sig: string; login: string; email: string; password: string };
+  'auth.LoginByAppleID': { clientId: string; sig: string; identityToken: string };
+  'auth.UnlinkSocialProfile': { provider: EShowSources };
+  'auth.LinkSocialProfile': { provider: EShowSources; returnUrl: string };
+  // in-app purchases
+  'iap.ValidateReceiptIOS': { receiptData: string; transactionId: string; isSandbox?: boolean };
+  'iap.ValidateReceiptAndroid': { payload: string };
+  // site
+  'site.Meta': { url: string };
+  'site.Counters': object;
+  'site.ShowsPopular': { count?: number };
+  'site.ShowsOnline': { count?: number };
+  'site.ShowsOnlinePromo': { count?: number };
+  'site.TopEpisodeComments': { episodeCount?: number; days?: number };
+  'site.PaymentTypes': object;
+  'site.Products': object;
+  'site.CreateProTransaction': { product: string; paymentType: string };
+  // news
+  'news.Get': {
+    search?: Partial<{
+      showId: number;
+      episodeId: number;
+      category: string;
+      tag: string;
+      isTrailer: boolean;
+      similarNewsId: number;
+      forCurrentUser: boolean;
+    }>;
+    page?: number;
+    pageSize?: number;
+  };
+  'news.Count': {
+    search?: Partial<{
+      showId: number;
+      episodeId: number;
+      category: string;
+      tag: string;
+      isTrailer: boolean;
+      similarNewsId: number;
+      forCurrentUser: boolean;
+    }>;
+  };
+  'news.GetById': { newsId: number };
+  'news.Categories': object;
+  'news.Comments': { newsId: number };
+  'news.ViewComments': { newsId: number };
+  'news.TrackComments': { newsId: number; isTracked: boolean };
+  'news.VoteComment': { commentId: number; isPositive: boolean };
+  'news.PostComment': { newsId: number; text: string; image?: string; parentCommentId?: number };
+  'news.UpdateComment': { commentId: number; text: string; image?: string; deleteImage?: boolean };
+  'news.DeleteComment': { commentId: number };
+  'news.TranslateComment': { commentId: number; language?: string };
+  // push
+  'push.RegisterTokenIOS': { token: string; idfa?: string };
+  'push.RegisterTokenAndroid': { token: string; gaid?: string };
+  'push.RegisterTokenWeb': { token: string };
+  'push.SendTestAndroid': { pushType: string };
+  'push.SendTestIOS': { pushType: string };
+  // recommendations
+  'recommendation.Get': { count?: number };
+  'recommendation.Reject': EpisodeId;
+  'recommendation.UndoReject': EpisodeId;
+  // v3 only
+  'manage.SetMovieStatus': WithMovieStatusParam<EMovieStatus>;
+  'movies.GetCatalog': WithSearchParam<WithQueryParam>;
+  'movies.GetById': { movieId: number };
+  'profile.UnwatchedMovies': object;
+  'profile.UnwatchedMoviesFilters': object;
+  'profile.UnwatchedMoviesCount': object;
+  'profile.WatchedMovies': object;
+  'profile.WatchedMoviesFilters': object;
+  'profile.WatchedMoviesCount': object;
 }

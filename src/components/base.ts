@@ -42,11 +42,14 @@ import type {
   UserShowSummary,
 } from '../types/models';
 import type {
+  EManagedList,
   EpisodeId,
   EpisodeList,
   EpisodeListWithId,
+  Rating,
   SearchObjectOptions,
   ShowSearchParams,
+  ShowTopMode,
   WithCountParam,
   WithId,
   WithLoginParam,
@@ -123,10 +126,7 @@ export class MyShows extends MyShowsCore {
    * @param {int} id - Episode id.
    * @param {string} list - A list name (can be MyShows.EList.FAVORITES or MyShows.EList.IGNORED).
    */
-  async listsAddEpisode<T = boolean>(
-    id: number,
-    list: EList.FAVORITES | EList.IGNORED,
-  ): Promise<RpcResponse<T, EpisodeListWithId>> {
+  async listsAddEpisode<T = boolean>(id: number, list: EManagedList): Promise<RpcResponse<T, EpisodeListWithId>> {
     return await this.query<T, EpisodeListWithId>({
       method: 'lists.AddEpisode',
       params: {
@@ -141,10 +141,7 @@ export class MyShows extends MyShowsCore {
    * @param {int} id - Episode id.
    * @param {string} list - A list name (can be MyShows.EList.FAVORITES or MyShows.EList.IGNORED).
    */
-  async listsRemoveEpisode<T = boolean>(
-    id: number,
-    list: EList.FAVORITES | EList.IGNORED,
-  ): Promise<RpcResponse<T, EpisodeListWithId>> {
+  async listsRemoveEpisode<T = boolean>(id: number, list: EManagedList): Promise<RpcResponse<T, EpisodeListWithId>> {
     return await this.query<T, EpisodeListWithId>({
       method: 'lists.RemoveEpisode',
       params: {
@@ -196,7 +193,7 @@ export class MyShows extends MyShowsCore {
    * @param {int} id - Show id.
    * @param {int} rating - Rating (from 0 to 5)
    */
-  async manageRateShow<T = boolean, R = 1 | 2 | 3 | 4 | 5>(
+  async manageRateShow<T = boolean, R = Rating>(
     id: number,
     rating: R,
   ): Promise<RpcResponse<T, WithRatingParam<R> & WithId>> {
@@ -214,7 +211,7 @@ export class MyShows extends MyShowsCore {
    * @param {int} id - Episode id.
    * @param {int} [rating] - Rating (from 0 to 5).
    */
-  async manageCheckEpisode<T = boolean, R = 1 | 2 | 3 | 4 | 5>(
+  async manageCheckEpisode<T = boolean, R = Rating>(
     id: number,
     rating?: R,
   ): Promise<RpcResponse<T, WithRatingParam<R> & WithId>> {
@@ -245,7 +242,7 @@ export class MyShows extends MyShowsCore {
    * @param {int} id - Episode id.
    * @param {int} [rating] - Rating (from 0 to 5).
    */
-  async manageRateEpisode<T = boolean, R = 1 | 2 | 3 | 4 | 5>(
+  async manageRateEpisode<T = boolean, R = Rating>(
     id: number,
     rating: R,
   ): Promise<RpcResponse<T, WithRatingParam<R> & WithId>> {
@@ -892,10 +889,10 @@ export class MyShows extends MyShowsCore {
    * @param {int} [count=500] - Number of shows (max 500).
    */
   async showsTop<T = ShowRank[]>(
-    mode = EGenderVote.ALL,
+    mode: ShowTopMode = EGenderVote.ALL,
     count = 500,
-  ): Promise<RpcResponse<T, { mode: EGenderVote; count: number }>> {
-    return await this.query<T, { mode: EGenderVote; count: number }>({
+  ): Promise<RpcResponse<T, { mode: ShowTopMode; count: number }>> {
+    return await this.query<T, { mode: ShowTopMode; count: number }>({
       method: 'shows.Top',
       params: {
         mode,

@@ -105,10 +105,13 @@ export interface MovieSearchModel extends MovieModel {
   userMovie: UserMovie;
 }
 
+/** Watch statuses a movie can carry in `movies.GetCatalog` results. */
+export type EMovieSearchStatus = EMovieStatus.finished | EMovieStatus.later;
+
 export interface MovieSearch {
   movie: MovieSearchModel;
   audience: number;
-  status: EMovieStatus.finished | EMovieStatus.later;
+  status: EMovieSearchStatus;
 }
 
 export interface User {

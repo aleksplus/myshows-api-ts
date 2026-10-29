@@ -1,6 +1,6 @@
 import type { AxiosInstance } from 'axios';
 
-import { EGender, EGenderVote, EList, EMovieStatus, EShowSources, EShowStatus } from '../enums';
+import { EGender, EGenderVote, EList, EMovieStatus, EShowSources, EShowStatus, ESpentTime } from '../enums';
 
 export type MethodV2 =
   | 'profile.Get'
@@ -127,12 +127,15 @@ export interface EpisodeList {
   list: EList;
 }
 
+/** Lists that items can be added to or removed from (`lists.Add*` / `lists.Remove*`). */
+export type EManagedList = EList.FAVORITES | EList.IGNORED;
+
 export interface EpisodeId {
   id: number;
 }
 
 export interface EpisodeListWithId extends EpisodeList, EpisodeId {
-  list: EList.FAVORITES | EList.IGNORED;
+  list: EManagedList;
 }
 
 export type ShowSearchParams = {
@@ -152,6 +155,9 @@ export type SearchParams = {
 };
 
 export type Rating = 1 | 2 | 3 | 4 | 5;
+
+/** Gender filter for `shows.Top`; accepts raw strings alongside `EGenderVote` members. */
+export type ShowTopMode = EGenderVote | 'all' | 'm' | 'f';
 
 export interface WithId {
   id: number;
@@ -208,7 +214,7 @@ export type DefaultParams = {
 
 export type SearchObjectOptions = Partial<{
   query: string;
-  wasted: number;
+  wasted: ESpentTime;
   year: number;
   gender: EGender;
 }>;
@@ -266,7 +272,7 @@ export interface MethodParams {
   'shows.Ids': { fromId: number; count?: number };
   'shows.Episode': EpisodeId;
   'shows.Genres': object;
-  'shows.Top': { mode?: EGenderVote | 'all' | 'm' | 'f'; count?: number };
+  'shows.Top': { mode?: ShowTopMode; count?: number };
   'shows.EpisodeComments': { episodeId: number };
   'shows.ViewEpisodeComments': { episodeId: number };
   'shows.TrackEpisodeComments': { episodeId: number; isTracked: boolean };
@@ -278,10 +284,10 @@ export interface MethodParams {
   // lists
   'lists.Episodes': { list: EList };
   'lists.Shows': { list: EList };
-  'lists.AddEpisode': { id: number; list: EList };
-  'lists.RemoveEpisode': { id: number; list: EList };
-  'lists.AddShow': { id: number; list: EList };
-  'lists.RemoveShow': { id: number; list: EList };
+  'lists.AddEpisode': { id: number; list: EManagedList };
+  'lists.RemoveEpisode': { id: number; list: EManagedList };
+  'lists.AddShow': { id: number; list: EManagedList };
+  'lists.RemoveShow': { id: number; list: EManagedList };
   // manage
   'manage.SetShowStatus': { id: number; status: EShowStatus };
   'manage.RateShow': { id: number; rating: Rating };

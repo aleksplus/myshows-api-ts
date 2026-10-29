@@ -7,10 +7,10 @@
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist/*",
-    "prepublishOnly": "yarn clean && yarn build",
-    "format": "yarn run biome format --write src/",
-    "lint": "yarn run biome lint --write src/",
-    "check": "yarn run biome check --write src/"
+    "prepublishOnly": "npm run clean && npm run build",
+    "format": "npx biome format --write src/",
+    "lint": "npx biome lint --write src/",
+    "check": "npx biome check --write src/"
   },
   "files": [
     "dist",

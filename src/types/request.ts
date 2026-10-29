@@ -379,10 +379,10 @@ export interface MethodParams {
   'manage.SetMovieStatus': WithMovieStatusParam<EMovieStatus>;
   'movies.GetCatalog': WithSearchParam<WithQueryParam>;
   'movies.GetById': { movieId: number };
-  'profile.UnwatchedMovies': object;
+  'profile.UnwatchedMovies': { page?: number; pageSize?: number };
   'profile.UnwatchedMoviesFilters': object;
   'profile.UnwatchedMoviesCount': object;
-  'profile.WatchedMovies': object;
+  'profile.WatchedMovies': { page?: number; pageSize?: number };
   'profile.WatchedMoviesFilters': object;
   'profile.WatchedMoviesCount': object;
 }

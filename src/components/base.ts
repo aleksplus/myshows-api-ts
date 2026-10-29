@@ -1043,15 +1043,97 @@ export class MyShows extends MyShowsCore {
   }
 
   /**
-   * Returns matched movies (does not require authentication).
+   * Returns matched movies (does not require authentication, v3 API).
    * @param {string} query - Query string.
+   * @param {int} [page=0] - Page number.
+   * @param {int} [pageSize=100] - Number of movies per page.
    */
-  async moviesSearch(query: string) {
+  async moviesSearch(
+    query: string,
+    page = 0,
+    pageSize = 100,
+  ): Promise<RpcResponse<MovieSearch[], WithSearchParam<WithQueryParam>>> {
     return await this.queryV3<MovieSearch[], WithSearchParam<WithQueryParam>>({
       method: 'movies.GetCatalog',
       params: {
         search: { query },
+        page,
+        pageSize,
       },
+    });
+  }
+
+  /**
+   * Returns the user's watched movies, one page at a time
+   * (requires authentication, v3 API).
+   * @param {int} [page=0] - Page number.
+   * @param {int} [pageSize=100] - Number of movies per page.
+   */
+  async profileWatchedMovies<T = MovieModel[]>(
+    page = 0,
+    pageSize = 100,
+  ): Promise<RpcResponse<T, { page: number; pageSize: number }>> {
+    return await this.queryV3<T, { page: number; pageSize: number }>({
+      method: 'profile.WatchedMovies',
+      params: { page, pageSize },
+    });
+  }
+
+  /**
+   * Total number of the user's watched movies (requires authentication, v3 API).
+   */
+  async profileWatchedMoviesCount<T = number>(): Promise<RpcResponse<T>> {
+    return await this.queryV3<T>({
+      method: 'profile.WatchedMoviesCount',
+      params: {},
+    });
+  }
+
+  /**
+   * Available filters for the watched-movies list (requires authentication,
+   * v3 API). Item shape not yet verified against a populated account.
+   */
+  async profileWatchedMoviesFilters<T = unknown[]>(): Promise<RpcResponse<T>> {
+    return await this.queryV3<T>({
+      method: 'profile.WatchedMoviesFilters',
+      params: {},
+    });
+  }
+
+  /**
+   * Returns the user's unwatched movies, one page at a time
+   * (requires authentication, v3 API).
+   * @param {int} [page=0] - Page number.
+   * @param {int} [pageSize=100] - Number of movies per page.
+   */
+  async profileUnwatchedMovies<T = MovieModel[]>(
+    page = 0,
+    pageSize = 100,
+  ): Promise<RpcResponse<T, { page: number; pageSize: number }>> {
+    return await this.queryV3<T, { page: number; pageSize: number }>({
+      method: 'profile.UnwatchedMovies',
+      params: { page, pageSize },
+    });
+  }
+
+  /**
+   * Total number of the user's unwatched movies (requires authentication, v3 API).
+   */
+  async profileUnwatchedMoviesCount<T = number>(): Promise<RpcResponse<T>> {
+    return await this.queryV3<T>({
+      method: 'profile.UnwatchedMoviesCount',
+      params: {},
+    });
+  }
+
+  /**
+   * Available filters for the unwatched-movies list (requires authentication,
+   * v3 API). Item shape not yet verified against a populated account.
+   */
+  async profileUnwatchedMoviesFilters<T = unknown[]>(): Promise<RpcResponse<T>> {
+    return await this.queryV3<T>({
+      method: 'profile.UnwatchedMoviesFilters',
+      params: {},
     });
   }
 

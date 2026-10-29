@@ -108,6 +108,8 @@ export interface MovieModel extends MovieModelBase, Partial<MalEntity> {
   hasBackgroundImage?: boolean;
   commentsTotal?: number;
   commentsNew?: number;
+  /** Present in profile movie lists (Watched/Unwatched); absent from movies.GetById. */
+  userMovie?: UserMovie;
 }
 
 interface UserMovie {

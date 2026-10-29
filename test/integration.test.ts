@@ -123,5 +123,15 @@ describe.skipIf(!hasCredentials)('MyShows live API', () => {
       expect(response.result?.titleOriginal).toBe('Django Unchained');
       expect(typeof response.result?.canRate).toBe('boolean');
     });
+
+    it('profileWatchedMovies() returns an array (falsy counts are not errors)', async () => {
+      const list = await client.profileWatchedMovies();
+      expect(list.error).toBeUndefined();
+      expect(Array.isArray(list.result)).toBe(true);
+
+      const count = await client.profileWatchedMoviesCount();
+      expect(count.error).toBeUndefined();
+      expect(typeof count.result).toBe('number');
+    });
   });
 });

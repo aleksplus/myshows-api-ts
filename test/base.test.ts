@@ -74,4 +74,22 @@ describe('MyShows responses', () => {
     expect(api.requests[0]?.body.method).toBe('manage.SetMovieStatus');
     expect(api.requests[0]?.body.params).toEqual({ movieId: 8715, status: 'finished' });
   });
+
+  it('moviesSearch sends pagination params', async () => {
+    const { client, api } = makeClient([rpcOk([])]);
+
+    await client.moviesSearch('Django', 2, 50);
+
+    expect(api.requests[0]?.body.method).toBe('movies.GetCatalog');
+    expect(api.requests[0]?.body.params).toEqual({ search: { query: 'Django' }, page: 2, pageSize: 50 });
+  });
+
+  it('profileWatchedMovies sends page and pageSize via v3', async () => {
+    const { client, api } = makeClient([rpcOk([])]);
+
+    await client.profileWatchedMovies(1, 40);
+
+    expect(api.requests[0]?.body.method).toBe('profile.WatchedMovies');
+    expect(api.requests[0]?.body.params).toEqual({ page: 1, pageSize: 40 });
+  });
 });

@@ -42,4 +42,5 @@ export type OathResponseV3 = OathResponseError | OathResponseV3Done;
 
 export type RpcError = OmitRpc<JSONRPCErrorResponse>;
 export type RpcResult = OmitRpc<JSONRPCResponse>;
+// oxlint-disable-next-line no-explicit-any -- public API default: bare `RpcResponse` keeps `result` usable without casts
 export type RpcResponse<T = any, P = {}> = (RpcResult & { result?: T } & P) | RpcError;

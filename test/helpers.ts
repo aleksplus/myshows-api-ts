@@ -2,7 +2,7 @@ import axios, { AxiosError, type AxiosAdapter, type InternalAxiosRequestConfig }
 
 export interface CapturedRequest {
   url: string;
-  body: any;
+  body: Record<string, unknown>;
   headers: Record<string, string>;
 }
 

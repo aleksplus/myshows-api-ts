@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2015",
-    /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', 'ES2021', or 'ESNEXT'. */
     "module": "commonjs",
+    /* JS and .d.ts emit is done by tsdown (oxc); tsc is a pure typecheck. */
+    "noEmit": true,
+    /* Required alongside isolatedDeclarations; noEmit keeps tsc from writing anything. */
     "declaration": true,
-    "outDir": "./dist/",
-    /* Redirect output structure to the directory. */
-    "rootDir": "./src/",
     "strict": true,
+    "isolatedDeclarations": true,
     "esModuleInterop": true,
     /* Advanced Options */
     "skipLibCheck": true,
@@ -19,6 +19,7 @@
     "node_modules",
     "dist",
     "example",
-    "test"
+    "test",
+    "tsdown.config.mts"
   ]
 }

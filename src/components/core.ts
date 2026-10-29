@@ -122,7 +122,7 @@ export class MyShowsCore {
   protected async query<T, P = QueryParams>(
     params: Omit<QueryHandlerParams<P>, 'query' | 'defaultParams'>,
     instance?: AxiosInstance,
-  ) {
+  ): Promise<RpcResponse<T, P>> {
     return await queryHandler<T, P>({
       query: instance ?? this.axios,
       defaultParams: this.defaultParams,
@@ -138,7 +138,7 @@ export class MyShowsCore {
   protected async queryV3<T, P = QueryParams>(
     params: Omit<QueryHandlerParams<P, MethodV3>, 'query' | 'defaultParams'>,
     instance?: AxiosInstance,
-  ) {
+  ): Promise<RpcResponse<T, P>> {
     return await queryHandler<T, P>({
       query: instance ?? this.axiosV3,
       defaultParams: this.defaultParams,

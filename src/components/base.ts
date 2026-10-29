@@ -69,7 +69,7 @@ export class MyShows extends MyShowsCore {
    * Returns a list of shows (requires authentication).
    * @param {string} [list=MyShows.EList.FAVORITES] - A list name.
    */
-  async listsShows<T = ShowSummary[]>(list = EList.FAVORITES): Promise<RpcResponse<T, EpisodeList>> {
+  async listsShows<T = ShowSummary[]>(list: EList = EList.FAVORITES): Promise<RpcResponse<T, EpisodeList>> {
     return await this.query<T, EpisodeList>({
       method: 'lists.Shows',
       params: {
@@ -112,7 +112,7 @@ export class MyShows extends MyShowsCore {
    * Returns a list of episodes (requires authentication).
    * @param {string} [list=MyShows.EList.FAVORITES] - A list name, any of MyShows.EList enum.
    */
-  async listsEpisodes<T = EpisodeListItem[]>(list = EList.FAVORITES): Promise<RpcResponse<T, EpisodeList>> {
+  async listsEpisodes<T = EpisodeListItem[]>(list: EList = EList.FAVORITES): Promise<RpcResponse<T, EpisodeList>> {
     return await this.query<T, EpisodeList>({
       method: 'lists.Episodes',
       params: {

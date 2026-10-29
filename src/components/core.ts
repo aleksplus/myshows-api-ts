@@ -103,8 +103,10 @@ export class MyShowsCore {
         return handleErrorResponse(response);
       }
 
-      // Header names match the myshows.me web app; do not "fix" the casing
-      // without verifying against the live v3 API.
+      // Verified against the live v3 API: the endpoint requires the
+      // non-standard `authorization2` header (plain `Authorization`
+      // returns 401 Invalid token). The `cookies` header is accepted but
+      // not required; kept to mirror the web-app session.
       this.axiosV3.defaults.headers.common.cookies = response.headers['set-cookie']?.join(';') ?? '';
       this.axiosV3.defaults.headers.common.authorization2 = `Bearer ${(response.data as OathResponseV3Done).token}`;
     } catch (error) {

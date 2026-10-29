@@ -21,6 +21,20 @@ interface IMDBEntity {
   imdbUrl: string | null;
 }
 
+interface MalEntity {
+  malId: number | null;
+  malRating: number | null;
+  malVoted: number | null;
+  malUrl: string | null;
+}
+
+/** Genre as returned by the v3 movie endpoints. */
+export interface MovieGenre {
+  id: number;
+  title: string;
+  alias: string;
+}
+
 interface OnlineLinks {
   onlineLinks: MovieOuterLink[];
   onlineLinkExclusive: MovieOuterLink | null;
@@ -79,14 +93,19 @@ interface MovieModelCompany {
   title: string;
 }
 
-export interface MovieModel extends MovieModelBase {
+export interface MovieModel extends MovieModelBase, Partial<MalEntity> {
   countries: MovieModelCountry[];
   productionCompanies?: MovieModelCompany[];
   releaseDate: string;
   watched: number;
   runtimeText: string;
   imageInfo: Partial<MovieImageInfo>;
-  hasBackgroundImage?: false;
+  imageHash?: string;
+  genres?: MovieGenre[];
+  canRate?: boolean;
+  watchedAt?: string | null;
+  onlineLinks?: MovieOuterLink[];
+  hasBackgroundImage?: boolean;
   commentsTotal?: number;
   commentsNew?: number;
 }
@@ -105,13 +124,15 @@ export interface MovieSearchModel extends MovieModel {
   userMovie: UserMovie;
 }
 
-/** Watch statuses a movie can carry in `movies.GetCatalog` results. */
-export type EMovieSearchStatus = EMovieStatus.finished | EMovieStatus.later;
+/** Watch statuses a movie can carry in `movies.GetCatalog` results; '' when not in any list. */
+export type EMovieSearchStatus = EMovieStatus.finished | EMovieStatus.later | '';
 
 export interface MovieSearch {
   movie: MovieSearchModel;
   audience: number;
   status: EMovieSearchStatus;
+  weeklyRank?: number;
+  weeklyDelta?: number;
 }
 
 export interface User {

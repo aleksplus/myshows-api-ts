@@ -1056,16 +1056,11 @@ export class MyShows extends MyShowsCore {
   }
 
   /**
-   * Returns a movie by id
-   * @param {int} id - Show id.
+   * Returns a movie by id (v3 API).
+   * @param {int} id - Movie id.
    */
-  async moviesGetById(id: number) {
-    return await this.query<
-      MovieModel,
-      {
-        movieId: number;
-      }
-    >({
+  async moviesGetById<T = MovieModel>(id: number): Promise<RpcResponse<T, { movieId: number }>> {
+    return await this.queryV3<T, { movieId: number }>({
       method: 'movies.GetById',
       params: {
         movieId: id,

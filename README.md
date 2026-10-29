@@ -23,7 +23,7 @@ $ npm install @p.aleks/myshows-api
 Simple example of using generic method: 
 
 ```javascript
-import MyShows from '@p.aleks/myshows-api';
+import { MyShows } from '@p.aleks/myshows-api';
 
 const credentials = {
   client_id: 'your_client_id',
@@ -51,6 +51,42 @@ async function example() {
 
 example()
 
+```
+
+## Sessions and error handling
+
+`login()` stores the access token, its expiry, and the refresh token. Use
+`isTokenExpired()` and `refresh()` to keep long-running sessions alive:
+
+```javascript
+if (myshows.isTokenExpired()) {
+  await myshows.refresh()
+}
+```
+
+Every method resolves to either a response with a `result` field or an error
+of the shape `{ error: { code, message } }` — network and HTTP failures are
+normalized into the same shape:
+
+```javascript
+const response = await myshows.listsShows()
+
+if (response.error) {
+  console.error(response.error.code, response.error.message)
+} else {
+  console.log(response.result) // typed as ShowSummary[]
+}
+```
+
+A falsy `result` (`false`, `0`, `''`) is a valid response, not an error.
+
+## Custom axios options
+
+Pass an [axios request config](https://axios-http.com/docs/req_config) as the
+second constructor argument to set a proxy, custom timeout, or HTTP agent:
+
+```javascript
+const myshows = new MyShows(credentials, { timeout: 30_000 })
 ```
 
 ## API Documentation

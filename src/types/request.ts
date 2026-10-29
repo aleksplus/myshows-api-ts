@@ -266,7 +266,7 @@ export interface MethodParams {
   'shows.Ids': { fromId: number; count?: number };
   'shows.Episode': EpisodeId;
   'shows.Genres': object;
-  'shows.Top': { mode?: EGenderVote; count?: number };
+  'shows.Top': { mode?: EGenderVote | 'all' | 'm' | 'f'; count?: number };
   'shows.EpisodeComments': { episodeId: number };
   'shows.ViewEpisodeComments': { episodeId: number };
   'shows.TrackEpisodeComments': { episodeId: number; isTracked: boolean };

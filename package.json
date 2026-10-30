@@ -26,9 +26,6 @@
     "LICENSE"
   ],
   "author": "Aleks P. (https://github.com/aleksplus)",
-  "contributors": [
-    "Sergey Vytrishko (https://github.com/asznee7)"
-  ],
   "license": "MIT",
   "dependencies": {
     "axios": "1.15.0"
